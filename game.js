@@ -6,8 +6,14 @@ let boardLength = 10; // オセロボードの横・縦の数
 let boardOneSize = 0; // オセロボードの一つ当たりの大きさ
 let boardOnePad = 5; // 余白
 let nowBoardSize = [0, 0]; // オセロボードのサイズ（内部処理用）
+let boardPoint = [];
 let nowPanel = [null, null]; // 現在の位置
 let nowPiece = {}; // 位置とプレイヤー情報（int）
+let sizeWH = 0;
+let boardWH = 0;
+let boardPadding = 0;
+let boardPaddingWH = [];
+let boardLine = 0;
 let playerColor = { // プレイヤー一覧
     1: "rgba(255, 0, 255)",
     2: "rgba(0, 255, 255)",
@@ -22,9 +28,13 @@ function getSize(){
     // キャンバスのサイズを再設定
     canvas.width = wrapper.offsetWidth;
     canvas.height =  wrapper.offsetHeight;
-    let sizeWH = canvas.width; // 基準にする大きさ
+    sizeWH = canvas.width; // 基準にする大きさ
     if (canvas.height < canvas.width) sizeWH = canvas.height;
-    boardOneSize = (((sizeWH-(boardOnePad*boardLength))/1.1) / boardLength);
+    boardWH = sizeWH-(sizeWH/10);
+    boardPadding = sizeWH/90;
+    boardLine = sizeWH/200;
+    boardPaddingWH = boardWH-(boardPadding*2) - (boardLength*boardLine);
+    boardOneSize = (boardPaddingWH / boardLength);
     drawOthelloCanvas();
 }
 
@@ -59,7 +69,7 @@ window.addEventListener("load", function(){
  */
 function canvasMouseClick (e) {
     let panelPoint = nowPanel[0]+(nowPanel[1]*boardLength);
-    nowPiece[panelPoint] = 4;
+    nowPiece[panelPoint] = 1;
 }
 
 /*
@@ -67,7 +77,7 @@ function canvasMouseClick (e) {
  */
 function canvasMouseMove(e) {
     let rect = e.target.getBoundingClientRect()
-    let _nowPanel = othelloXY(e.clientX - rect.left-30, e.clientY - rect.top-30);
+    let _nowPanel = othelloXY(e.clientX - rect.left, e.clientY - rect.top);
     if (_nowPanel[0] >= 0 && _nowPanel[1] >= 0 && _nowPanel[0] < boardLength && _nowPanel[1] < boardLength) {
         nowPanel = _nowPanel;
     } else {
@@ -80,7 +90,8 @@ function canvasMouseMove(e) {
  座標から現在位置を求める
  */
 function othelloXY (x, y) {
-    let mouseMoveSize = (nowBoardSize[0]+boardOnePad)/(boardLength);
+    console.log(`${x}:${y} | ${boardPoint} | ${boardPaddingWH} | ${boardWH- boardPaddingWH} | ${boardLine}`);
+    let mouseMoveSize = boardPoint[0];
     let _nowPanel = [Math.floor(x/mouseMoveSize), Math.floor(y/mouseMoveSize)];
     return _nowPanel;
 }
@@ -89,9 +100,15 @@ function othelloXY (x, y) {
  オセロのキャンバスを作る
  */
 function drawOthelloCanvas () {
+    // キャンバスをリセット
     g.beginPath ();
-    g.fillStyle = "rgba(255,255,255)";
+    g.fillStyle = "rgba(0, 0, 0)";
     g.fillRect(0, 0, canvas.width, canvas.height);
+    // 背景を描写（黒色）
+    g.beginPath ();
+    g.fillStyle = "rgba(19, 19, 19)";
+    g.fillRect((canvas.width/2)-(boardWH/2), (canvas.height/2)-(boardWH/2), boardWH, boardWH);
+    boardPoint = [(canvas.width/2)-(boardWH/2)+boardLine, (canvas.height/2)-(boardWH/2)+boardLine];
     let nowX = 0;
     let nowY = 0;
     for (let i = 0; i < boardLength*boardLength; i++) {
@@ -101,11 +118,11 @@ function drawOthelloCanvas () {
         }
         let panelPoint = nowX+(nowY*boardLength);
         g.fillStyle = "rgb(56, 118, 29)";
-        g.fillRect(30 + (nowX * boardOneSize), 30 + (nowY * boardOneSize), (boardOneSize - boardOnePad), (boardOneSize - boardOnePad));
+        g.fillRect(boardPoint[0] + (nowX * boardOneSize) + (boardLine*nowX), boardPoint[1] + (nowY * boardOneSize) + (boardLine*nowY), boardOneSize, boardOneSize);
         if (nowX == nowPanel[0] && nowY == nowPanel[1] && nowPiece[panelPoint] == null) {
             g.beginPath ();
             g.arc( 50 + ((nowX * boardOneSize)), 50 + ((nowY * boardOneSize)), boardOneSize/3, 0 * Math.PI / 180, 360 * Math.PI / 180, false );
-            g.fillStyle = "rgba(0,0,0,0.8)";
+            g.fillStyle = "rgba(255,0,0,0.8)";
             g.fill();
         } else if (nowPiece[panelPoint] !== null) {
             g.beginPath ();
