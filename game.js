@@ -91,9 +91,8 @@ function canvasMouseMove(e) {
  座標から現在位置を求める
  */
 function othelloXY (x, y) {
-    console.log(`${x}:${y} | ${boardPoint} | ${boardEndPoint} | ${nowPanel} | ${boardOneSize}`);
-    let _nowPanel = [Math.floor(x/((boardEndPoint[0]-boardPoint[0]))), Math.floor(y/((boardEndPoint[1]-boardPoint[1])))];
-    console.log(`${(boardEndPoint[0]-boardPoint[0])/boardLength} | ${boardEndPoint[0]-boardPoint[0]}`);
+    console.log(`${x}:${y} | ${nowPanel}`);
+    let _nowPanel = [Math.floor((x-boardPoint[0])/((boardEndPoint[0]-boardPoint[0])/boardLength)), Math.floor((y-boardPoint[1])/((boardEndPoint[1]-boardPoint[1])/boardLength))];
     return _nowPanel;
 }
 
@@ -110,7 +109,7 @@ function drawOthelloCanvas () {
     g.fillStyle = "rgba(19, 19, 19)";
     g.fillRect((canvas.width/2)-(boardWH/2)-boardPadding, (canvas.height/2)-(boardWH/2)-boardPadding, boardWH, boardWH);
     boardPoint = [(canvas.width/2)-(boardWH/2)+boardLine, (canvas.height/2)-(boardWH/2)+boardLine];
-    boardEndPoint = [boardPoint[0] + (boardLength * boardOneSize) + ((boardLine-1) * boardLength), boardPoint[1] + (boardLength * boardOneSize) + ((boardLine-1) * boardLength)];
+    boardEndPoint = [boardPoint[0] + (boardLength * boardOneSize) + ((boardLine) * boardLength), boardPoint[1] + (boardLength * boardOneSize) + ((boardLine) * boardLength)];
     let nowX = 0;
     let nowY = 0;
     for (let i = 0; i < boardLength*boardLength; i++) {
@@ -123,12 +122,12 @@ function drawOthelloCanvas () {
         g.fillRect(boardPoint[0] + (nowX * boardOneSize) + (boardLine*nowX), boardPoint[1] + (nowY * boardOneSize) + (boardLine*nowY), boardOneSize, boardOneSize);
         if (nowX == nowPanel[0] && nowY == nowPanel[1] && nowPiece[panelPoint] == null) {
             g.beginPath ();
-            g.arc( 50 + ((nowX * boardOneSize)), 50 + ((nowY * boardOneSize)), boardOneSize/3, 0 * Math.PI / 180, 360 * Math.PI / 180, false );
-            g.fillStyle = "rgba(255,0,0,0.8)";
+            g.arc( boardPoint[0] + ((nowX+1) * boardOneSize) + (boardLine*nowX) - (boardOneSize/2), boardPoint[1] + ((nowY+1) * boardOneSize) + (boardLine*nowY) - (boardOneSize/2), boardOneSize/2.3, 0 * Math.PI / 180, 360 * Math.PI / 180, false );
+            g.fillStyle = "rgba(0,0,0,0.8)";
             g.fill();
         } else if (nowPiece[panelPoint] !== null) {
             g.beginPath ();
-            g.arc( 50 + ((nowX * boardOneSize)), 50 + ((nowY * boardOneSize)), boardOneSize/3, 0 * Math.PI / 180, 360 * Math.PI / 180, false );
+            g.arc( boardPoint[0] + ((nowX+1) * boardOneSize) + (boardLine*nowX) - (boardOneSize/2), boardPoint[1] + ((nowY+1) * boardOneSize) + (boardLine*nowY) - (boardOneSize/2), boardOneSize/2.3, 0 * Math.PI / 180, 360 * Math.PI / 180, false );
             g.fillStyle = playerColor[nowPiece[panelPoint]];
             g.fill();
         }
