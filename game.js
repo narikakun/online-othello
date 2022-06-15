@@ -2,10 +2,8 @@ let wrapper = null;	// キャンバスの親要素
 let canvas = null;	// キャンバス
 let g = null; // コンテキスト
 let $id = function(id){ return document.getElementById(id); }; // DOM取得用
-let boardLength = 10; // オセロボードの横・縦の数
+let boardLength = 8; // オセロボードの横・縦の数　（偶数で指定が必須）
 let boardOneSize = 0; // オセロボードの一つ当たりの大きさ
-let boardOnePad = 5; // 余白
-let nowBoardSize = [0, 0]; // オセロボードのサイズ（内部処理用）
 let boardPoint = [];
 let boardEndPoint = [];
 let nowPanel = [null, null]; // 現在の位置
@@ -21,6 +19,39 @@ let playerColor = { // プレイヤー一覧
     3: "rgba(255, 255, 255)",
     4: "rgba(255, 217, 102)"
 };
+
+let playerList = {
+    1: null,
+    2: null,
+    3: null,
+    4: null
+}
+
+playerList[1] = "1";
+playerList[2] = "1";
+playerList[3] = "1";
+playerList[4] = "1";
+
+let myNumber = 1;
+let nowNumber = 1;
+
+/*
+ 初期設定
+ */
+function init() {
+    // 全マスを一度リセット
+    for (let i = 0; i < boardLength; i++) {
+        for (let ib= 0; ib < boardLength; ib++) {
+            nowPiece[i][ib] = null;
+        }
+    }
+    let boardLengthHanbun = Math.floor(boardLength/2);
+    nowPiece[boardLengthHanbun-1][boardLengthHanbun-1] = 1;
+    nowPiece[boardLengthHanbun][boardLengthHanbun-1] = 2;
+    nowPiece[boardLengthHanbun-1][boardLengthHanbun] = 3;
+    nowPiece[boardLengthHanbun][boardLengthHanbun] = 4;
+    drawOthelloCanvas();
+}
 
 /*
  キャンバスのサイズをウインドウに合わせて変更
@@ -57,20 +88,19 @@ window.addEventListener("load", function(){
     g = canvas.getContext("2d");
     canvas.addEventListener("mousemove", canvasMouseMove);
     canvas.addEventListener("click", canvasMouseClick);
-    for (let i = 0; i < boardLength*boardLength; i++) {
-        nowPiece[i] = null;
-    }
     // キャンバスをウインドウサイズにする
     getSize();
-    console.log(nowPiece);
+
+    // 初期設定
+    init();
 });
 
 /*
  キャンバスクリック時の動作
  */
 function canvasMouseClick (e) {
-    let panelPoint = nowPanel[0]+(nowPanel[1]*boardLength);
-    nowPiece[panelPoint] = 1;
+    if (nowPanel[0] == null || nowPanel[1] == null || nowNumber !== myNumber) return;
+    nowPiece[nowPanel[0]][nowPanel[1]] = 1;
 }
 
 /*
@@ -91,9 +121,15 @@ function canvasMouseMove(e) {
  座標から現在位置を求める
  */
 function othelloXY (x, y) {
-    console.log(`${x}:${y} | ${nowPanel}`);
     let _nowPanel = [Math.floor((x-boardPoint[0])/((boardEndPoint[0]-boardPoint[0])/boardLength)), Math.floor((y-boardPoint[1])/((boardEndPoint[1]-boardPoint[1])/boardLength))];
     return _nowPanel;
+}
+
+/*
+ 置ける場所を考える
+ */
+function setCanDoOthello (id) {
+
 }
 
 /*
@@ -117,21 +153,20 @@ function drawOthelloCanvas () {
             nowY++;
             nowX = 0;
         }
-        let panelPoint = nowX+(nowY*boardLength);
         g.fillStyle = "rgb(56, 118, 29)";
         g.fillRect(boardPoint[0] + (nowX * boardOneSize) + (boardLine*nowX), boardPoint[1] + (nowY * boardOneSize) + (boardLine*nowY), boardOneSize, boardOneSize);
-        if (nowX == nowPanel[0] && nowY == nowPanel[1] && nowPiece[panelPoint] == null) {
-            g.beginPath ();
+        if (nowX == nowPanel[0] && nowY == nowPanel[1] && nowPiece[nowX][nowY] == null && nowNumber == myNumber) {
+            g.beginPath();
             g.arc( boardPoint[0] + ((nowX+1) * boardOneSize) + (boardLine*nowX) - (boardOneSize/2), boardPoint[1] + ((nowY+1) * boardOneSize) + (boardLine*nowY) - (boardOneSize/2), boardOneSize/2.3, 0 * Math.PI / 180, 360 * Math.PI / 180, false );
             g.fillStyle = "rgba(0,0,0,0.8)";
             g.fill();
-        } else if (nowPiece[panelPoint] !== null) {
-            g.beginPath ();
+        } else if (nowPiece[nowX][nowY] !== null) {
+            g.beginPath();
             g.arc( boardPoint[0] + ((nowX+1) * boardOneSize) + (boardLine*nowX) - (boardOneSize/2), boardPoint[1] + ((nowY+1) * boardOneSize) + (boardLine*nowY) - (boardOneSize/2), boardOneSize/2.3, 0 * Math.PI / 180, 360 * Math.PI / 180, false );
-            g.fillStyle = playerColor[nowPiece[panelPoint]];
+            g.fillStyle = playerColor[nowPiece[nowX][nowY]];
             g.fill();
         }
-        nowBoardSize = [Math.floor((nowX+1)*boardOneSize), Math.floor((nowY+1)*boardOneSize)];
         nowX++;
     }
+    console.log(nowPiece);
 }
