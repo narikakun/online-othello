@@ -7,6 +7,7 @@ let boardOneSize = 0; // オセロボードの一つ当たりの大きさ
 let boardOnePad = 5; // 余白
 let nowBoardSize = [0, 0]; // オセロボードのサイズ（内部処理用）
 let boardPoint = [];
+let boardEndPoint = [];
 let nowPanel = [null, null]; // 現在の位置
 let nowPiece = {}; // 位置とプレイヤー情報（int）
 let sizeWH = 0;
@@ -90,9 +91,9 @@ function canvasMouseMove(e) {
  座標から現在位置を求める
  */
 function othelloXY (x, y) {
-    console.log(`${x}:${y} | ${boardPoint} | ${boardPaddingWH} | ${boardWH- boardPaddingWH} | ${boardLine}`);
-    let mouseMoveSize = boardPoint[0];
-    let _nowPanel = [Math.floor(x/mouseMoveSize), Math.floor(y/mouseMoveSize)];
+    console.log(`${x}:${y} | ${boardPoint} | ${boardEndPoint} | ${nowPanel} | ${boardOneSize}`);
+    let _nowPanel = [Math.floor(x/((boardEndPoint[0]-boardPoint[0]))), Math.floor(y/((boardEndPoint[1]-boardPoint[1])))];
+    console.log(`${(boardEndPoint[0]-boardPoint[0])/boardLength} | ${boardEndPoint[0]-boardPoint[0]}`);
     return _nowPanel;
 }
 
@@ -107,8 +108,9 @@ function drawOthelloCanvas () {
     // 背景を描写（黒色）
     g.beginPath ();
     g.fillStyle = "rgba(19, 19, 19)";
-    g.fillRect((canvas.width/2)-(boardWH/2), (canvas.height/2)-(boardWH/2), boardWH, boardWH);
+    g.fillRect((canvas.width/2)-(boardWH/2)-boardPadding, (canvas.height/2)-(boardWH/2)-boardPadding, boardWH, boardWH);
     boardPoint = [(canvas.width/2)-(boardWH/2)+boardLine, (canvas.height/2)-(boardWH/2)+boardLine];
+    boardEndPoint = [boardPoint[0] + (boardLength * boardOneSize) + ((boardLine-1) * boardLength), boardPoint[1] + (boardLength * boardOneSize) + ((boardLine-1) * boardLength)];
     let nowX = 0;
     let nowY = 0;
     for (let i = 0; i < boardLength*boardLength; i++) {
