@@ -13,6 +13,8 @@ let boardWH = 0;
 let boardPadding = 0;
 let boardPaddingWH = [];
 let boardLine = 0;
+let canPoint = {};
+
 let playerColor = { // プレイヤー一覧
     1: "rgba(255, 0, 255)",
     2: "rgba(0, 255, 255)",
@@ -32,16 +34,17 @@ playerList[2] = "1";
 playerList[3] = "1";
 playerList[4] = "1";
 
-let myNumber = 1;
-let nowNumber = 1;
+let myNumber = 3;
+let nowNumber = 3;
 
 /*
  初期設定
  */
 function init() {
     // 全マスを一度リセット
-    for (let i = 0; i < boardLength; i++) {
-        for (let ib= 0; ib < boardLength; ib++) {
+    for (let i = -1; i < boardLength+1; i++) {
+        nowPiece[i] = {};
+        for (let ib= -1; ib < boardLength+1; ib++) {
             nowPiece[i][ib] = null;
         }
     }
@@ -50,6 +53,7 @@ function init() {
     nowPiece[boardLengthHanbun][boardLengthHanbun-1] = 2;
     nowPiece[boardLengthHanbun-1][boardLengthHanbun] = 3;
     nowPiece[boardLengthHanbun][boardLengthHanbun] = 4;
+    getSize();
     drawOthelloCanvas();
 }
 
@@ -88,9 +92,6 @@ window.addEventListener("load", function(){
     g = canvas.getContext("2d");
     canvas.addEventListener("mousemove", canvasMouseMove);
     canvas.addEventListener("click", canvasMouseClick);
-    // キャンバスをウインドウサイズにする
-    getSize();
-
     // 初期設定
     init();
 });
@@ -99,8 +100,8 @@ window.addEventListener("load", function(){
  キャンバスクリック時の動作
  */
 function canvasMouseClick (e) {
-    if (nowPanel[0] == null || nowPanel[1] == null || nowNumber !== myNumber) return;
-    nowPiece[nowPanel[0]][nowPanel[1]] = 1;
+    if (nowPanel[0] == null || nowPanel[1] == null || nowNumber !== myNumber || !canPoint[nowPanel[0]][nowPanel[1]]) return;
+    nowPiece[nowPanel[0]][nowPanel[1]] = myNumber;
 }
 
 /*
@@ -128,8 +129,35 @@ function othelloXY (x, y) {
 /*
  置ける場所を考える
  */
-function setCanDoOthello (id) {
+function setCanDoOthello (id, x, y) {
+    if (x == null || y == null) return false;
+    if (nowPiece[x][y] !== null) return false;
+    if (nowPiece[x+1][y] == myNumber) return true; // 右
+    if (nowPiece[x+1][y+1] == myNumber) return true; // 右下
+    if (nowPiece[x][y+1] == myNumber) return true; // 下
+    if (nowPiece[x-1][y+1] == myNumber) return true; // 左下
+    if (nowPiece[x-1][y] == myNumber) return true; // 左
+    if (nowPiece[x-1][y-1] == myNumber) return true; // 左上
+    if (nowPiece[x][y-1] == myNumber) return true; // 上
+    if (nowPiece[x+1][y-1] == myNumber) return true; // 右上
 
+    if (y !== 3) return false;
+    // 右横方向
+    for (let i = x; i < boardLength; i++) {
+        if (0 > i || i > boardLength) continue;
+        //console.log(`${x} | ${y} | ${i}`)
+        if (nowPiece[i][y] == null) break;
+        if (nowPiece[i][y] == myNumber) return true;
+    }
+
+    // 左横方向
+    for (let i = x; i > 0; i--) {
+        if (0 > i || i > boardLength) continue;
+        console.log(`${x} | ${y} | ${i}`)
+        if (nowPiece[i][y] == null) break;
+        if (nowPiece[i][y] == myNumber) return true;
+    }
+    return false;
 }
 
 /*
@@ -148,11 +176,20 @@ function drawOthelloCanvas () {
     boardEndPoint = [boardPoint[0] + (boardLength * boardOneSize) + ((boardLine) * boardLength), boardPoint[1] + (boardLength * boardOneSize) + ((boardLine) * boardLength)];
     let nowX = 0;
     let nowY = 0;
+    console.log(nowPiece);
+    for (let i = 0; i < boardLength; i++) {
+        canPoint[i] = {};
+        for (let ib= 0; ib < boardLength; ib++) {
+            canPoint[i][ib] = setCanDoOthello(myNumber, i, ib);
+        }
+    }
+    console.log(canPoint);
     for (let i = 0; i < boardLength*boardLength; i++) {
         if (nowX >= boardLength) {
             nowY++;
             nowX = 0;
         }
+        if (!nowPiece[nowX]) continue;
         g.fillStyle = "rgb(56, 118, 29)";
         g.fillRect(boardPoint[0] + (nowX * boardOneSize) + (boardLine*nowX), boardPoint[1] + (nowY * boardOneSize) + (boardLine*nowY), boardOneSize, boardOneSize);
         if (nowX == nowPanel[0] && nowY == nowPanel[1] && nowPiece[nowX][nowY] == null && nowNumber == myNumber) {
@@ -165,8 +202,12 @@ function drawOthelloCanvas () {
             g.arc( boardPoint[0] + ((nowX+1) * boardOneSize) + (boardLine*nowX) - (boardOneSize/2), boardPoint[1] + ((nowY+1) * boardOneSize) + (boardLine*nowY) - (boardOneSize/2), boardOneSize/2.3, 0 * Math.PI / 180, 360 * Math.PI / 180, false );
             g.fillStyle = playerColor[nowPiece[nowX][nowY]];
             g.fill();
+        } else if (canPoint[nowX][nowY]) {
+            g.beginPath();
+            g.arc( boardPoint[0] + ((nowX+1) * boardOneSize) + (boardLine*nowX) - (boardOneSize/2), boardPoint[1] + ((nowY+1) * boardOneSize) + (boardLine*nowY) - (boardOneSize/2), boardOneSize/2.3, 0 * Math.PI / 180, 360 * Math.PI / 180, false );
+            g.fillStyle = "rgba(0,0,0,0.2)";
+            g.fill();
         }
         nowX++;
     }
-    console.log(nowPiece);
 }
