@@ -34,8 +34,8 @@ playerList[2] = "1";
 playerList[3] = "1";
 playerList[4] = "1";
 
-let myNumber = 1;
-let nowNumber = 1;
+let myNumber = 4;
+let nowNumber = 4;
 
 /*
  初期設定
@@ -102,6 +102,12 @@ window.addEventListener("load", function(){
 function canvasMouseClick (e) {
     if (nowPanel[0] == null || nowPanel[1] == null || nowNumber !== myNumber || !canPoint[nowPanel[0]][nowPanel[1]]) return;
     nowPiece[nowPanel[0]][nowPanel[1]] = myNumber;
+    nowNumber++;
+    myNumber++;
+    if (nowNumber > 4) {
+        nowNumber = 1;
+        myNumber = 1;
+    }
 }
 
 /*
@@ -132,7 +138,6 @@ function othelloXY (x, y) {
 function setCanDoOthello (id, x, y) {
     if (x == null || y == null) return false;
 
-    /*
     if (nowPiece[x][y] == null) {
         if (nowPiece[x + 1][y] == myNumber) return true; // 右
         if (nowPiece[x + 1][y + 1] == myNumber) return true; // 右下
@@ -144,29 +149,22 @@ function setCanDoOthello (id, x, y) {
         if (nowPiece[x + 1][y - 1] == myNumber) return true; // 右上
     }
 
-
-     */
     if (nowPiece[x][y] == null) {
         // 右横方向
         for (let i = x+1; i < boardLength; i++) {
             if (0 > i || i > boardLength) continue;
-            if (nowPiece[i][y] == null || x-i==0) break;
+            if (nowPiece[i][y] == null || ((nowPiece[i][y] == myNumber) && (x+1==i))) break;
             if (nowPiece[i][y] !== myNumber && nowPiece[i][y] !== null) continue;
-            console.log(`${x} ${y} ${i}`)
             if (nowPiece[i][y] == myNumber) return true;
         }
 
-        /*
         // 左横方向
-        for (let i = 0; i > 0; i--) {
-            if (0 >= i || i > boardLength) continue;
-            if (nowPiece[i][y] !== myNumber) continue;
-            console.log(`${x} | ${y} | ${i}`)
-            if (canPoint[i+1]) if (canPoint[i+1][y]) break;
+        for (let i = x-1; i > 0; i--) {
+            if (0 > i || i > boardLength) continue;
+            if (nowPiece[i][y] == null || ((nowPiece[i][y] == myNumber) && (x-1==i))) break;
+            if (nowPiece[i][y] !== myNumber && nowPiece[i][y] !== null) continue;
             if (nowPiece[i][y] == myNumber) return true;
         }
-
-         */
     }
     return false;
 }
