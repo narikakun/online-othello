@@ -34,8 +34,8 @@ playerList[2] = "1";
 playerList[3] = "1";
 playerList[4] = "1";
 
-let myNumber = 3;
-let nowNumber = 3;
+let myNumber = 1;
+let nowNumber = 1;
 
 /*
  初期設定
@@ -131,31 +131,42 @@ function othelloXY (x, y) {
  */
 function setCanDoOthello (id, x, y) {
     if (x == null || y == null) return false;
-    if (nowPiece[x][y] !== null) return false;
-    if (nowPiece[x+1][y] == myNumber) return true; // 右
-    if (nowPiece[x+1][y+1] == myNumber) return true; // 右下
-    if (nowPiece[x][y+1] == myNumber) return true; // 下
-    if (nowPiece[x-1][y+1] == myNumber) return true; // 左下
-    if (nowPiece[x-1][y] == myNumber) return true; // 左
-    if (nowPiece[x-1][y-1] == myNumber) return true; // 左上
-    if (nowPiece[x][y-1] == myNumber) return true; // 上
-    if (nowPiece[x+1][y-1] == myNumber) return true; // 右上
 
-    if (y !== 3) return false;
-    // 右横方向
-    for (let i = x; i < boardLength; i++) {
-        if (0 > i || i > boardLength) continue;
-        //console.log(`${x} | ${y} | ${i}`)
-        if (nowPiece[i][y] == null) break;
-        if (nowPiece[i][y] == myNumber) return true;
+    /*
+    if (nowPiece[x][y] == null) {
+        if (nowPiece[x + 1][y] == myNumber) return true; // 右
+        if (nowPiece[x + 1][y + 1] == myNumber) return true; // 右下
+        if (nowPiece[x][y + 1] == myNumber) return true; // 下
+        if (nowPiece[x - 1][y + 1] == myNumber) return true; // 左下
+        if (nowPiece[x - 1][y] == myNumber) return true; // 左
+        if (nowPiece[x - 1][y - 1] == myNumber) return true; // 左上
+        if (nowPiece[x][y - 1] == myNumber) return true; // 上
+        if (nowPiece[x + 1][y - 1] == myNumber) return true; // 右上
     }
 
-    // 左横方向
-    for (let i = x; i > 0; i--) {
-        if (0 > i || i > boardLength) continue;
-        console.log(`${x} | ${y} | ${i}`)
-        if (nowPiece[i][y] == null) break;
-        if (nowPiece[i][y] == myNumber) return true;
+
+     */
+    if (nowPiece[x][y] == null) {
+        // 右横方向
+        for (let i = x+1; i < boardLength; i++) {
+            if (0 > i || i > boardLength) continue;
+            if (nowPiece[i][y] == null || x-i==0) break;
+            if (nowPiece[i][y] !== myNumber && nowPiece[i][y] !== null) continue;
+            console.log(`${x} ${y} ${i}`)
+            if (nowPiece[i][y] == myNumber) return true;
+        }
+
+        /*
+        // 左横方向
+        for (let i = 0; i > 0; i--) {
+            if (0 >= i || i > boardLength) continue;
+            if (nowPiece[i][y] !== myNumber) continue;
+            console.log(`${x} | ${y} | ${i}`)
+            if (canPoint[i+1]) if (canPoint[i+1][y]) break;
+            if (nowPiece[i][y] == myNumber) return true;
+        }
+
+         */
     }
     return false;
 }
