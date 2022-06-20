@@ -37,7 +37,7 @@ playerList[1] = {
 };
 playerList[2] = {
     name: "白",
-    cpu: true
+    cpu: false
 };
 /*
 playerList[3] = {
@@ -148,8 +148,10 @@ function canvasMouseClick (cpu = false, panel = null) {
  */
 function nextPlayer () {
     nowNumber++;
+    myNumber++;
     if ((playerList[3]&&playerList[4])?nowNumber > 4:nowNumber > 2) {
         nowNumber = 1;
+        myNumber++;
     }
     drawOthelloCanvas();
     let canPointCount = 0;
