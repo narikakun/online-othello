@@ -18,10 +18,10 @@ let zeroCanPoint = {}; // 一つもピースがなくなった場合に置ける
 let zeroIs = false;
 
 let playerColor = { // プレイヤー一覧
-    1: "rgba(0, 0, 0)",
-    2: "rgba(255, 255, 255)",
-    3: "rgba(255, 0, 0)",
-    4: "rgba(0, 0, 255)"
+    1: [0, 0, 0],
+    2: [255, 255, 255],
+    3: [255, 0, 0],
+    4: [0, 0, 255]
 };
 
 let playerList = {
@@ -31,10 +31,25 @@ let playerList = {
     4: null
 }
 
-playerList[1] = "1";
-playerList[2] = "1";
-//playerList[3] = "1";
-//playerList[4] = "1";
+playerList[1] = {
+    name: "黒",
+    cpu: false
+};
+playerList[2] = {
+    name: "白",
+    cpu: true
+};
+/*
+playerList[3] = {
+    name: "赤",
+    cpu: true
+};
+playerList[4] = {
+    name: "青",
+    cpu: true
+};
+
+ */
 
 let myNumber =  1;
 let nowNumber = 1;
@@ -114,16 +129,17 @@ window.addEventListener("load", function(){
 /*
  キャンバスクリック時の動作
  */
-function canvasMouseClick () {
-    if (nowPanel[0] == null || nowPanel[1] == null || nowNumber !== myNumber) return;
+function canvasMouseClick (cpu = false, panel = null) {
+    let _panel = panel?panel:nowPanel;
+    if (_panel[0] == null || _panel[1] == null || (nowNumber !== myNumber)&&!cpu) return;
     if (zeroIs) {
-        if (!zeroCanPoint[nowPanel[0]][nowPanel[1]]) return;
+        if (!zeroCanPoint[_panel[0]][_panel[1]]) return;
     } else {
-        if (!canPoint[nowPanel[0]][nowPanel[1]]) return;
+        if (!canPoint[_panel[0]][_panel[1]]) return;
     }
     zeroIs = false;
-    nowPiece[nowPanel[0]][nowPanel[1]] = myNumber;
-    setOthelloTurn(nowPanel[0],nowPanel[1]);
+    nowPiece[_panel[0]][_panel[1]] = nowNumber;
+    setOthelloTurn(_panel[0],_panel[1]);
     nextPlayer();
 }
 
@@ -132,10 +148,8 @@ function canvasMouseClick () {
  */
 function nextPlayer () {
     nowNumber++;
-    myNumber++;
     if ((playerList[3]&&playerList[4])?nowNumber > 4:nowNumber > 2) {
         nowNumber = 1;
-        myNumber = 1;
     }
     drawOthelloCanvas();
     let canPointCount = 0;
@@ -146,12 +160,17 @@ function nextPlayer () {
     }
     if (canPointCount === 0) {
         let nowPieceCount = 0;
+        let nowPieceNullCount = 0;
         for (const nowPieceKey in nowPiece) {
             for (const nowPieceKeyAs in nowPiece[nowPieceKey]) {
                 if (nowPiece[nowPieceKey][nowPieceKeyAs] === nowNumber) nowPieceCount++;
+                if (nowPiece[nowPieceKey][nowPieceKeyAs] == null) nowPieceNullCount++;
             }
         }
-        if (nowPieceCount === 0) {
+        if (nowPieceNullCount === 0) {
+            console.log("終わり");
+            nowNumber = 5;
+        } else if (nowPieceCount === 0) {
             // 一つもピースがなくなった場合
             zeroIs = true;
             for (let i = 0; i < boardLength; i++) {
@@ -164,10 +183,13 @@ function nextPlayer () {
                     }
                 }
             }
+            if (playerList[nowNumber].cpu) cpGo();
         } else {
             // スキップ
             nextPlayer();
         }
+    } else {
+        if (playerList[nowNumber].cpu) cpGo();
     }
 }
 /*
@@ -223,15 +245,15 @@ function setCanDoOthello (x, y) {
     if (nowPiece[x][y] == null) {
         // 右横部分（現在マスから右・横を確認）
         for (let i = x+1; i < boardLength; i++) {
-            if (0 > i || i > boardLength) continue;
+            if (-1 > i || i > boardLength) continue;
             if (nowPiece[i][y] == null || ((nowPiece[i][y] === nowNumber) && (x+1===i))) break;
             if (nowPiece[i][y] !== nowNumber && nowPiece[i][y] !== null) continue;
             if (nowPiece[i][y] === nowNumber) return true;
         }
 
         // 左横方向（現在マスから左・横を確認）
-        for (let i = x-1; i > 0; i--) {
-            if (0 > i || i > boardLength) continue;
+        for (let i = x-1; i > -1; i--) {
+            if (-1 > i || i > boardLength) continue;
             if (nowPiece[i][y] == null || ((nowPiece[i][y] === nowNumber) && (x-1===i))) break;
             if (nowPiece[i][y] !== nowNumber && nowPiece[i][y] !== null) continue;
             if (nowPiece[i][y] === nowNumber) return true;
@@ -239,15 +261,15 @@ function setCanDoOthello (x, y) {
 
         // 下方向（現在マスから下・縦を確認）
         for (let i = y+1; i < boardLength; i++) {
-            if (0 > i || i > boardLength) continue;
+            if (-1 > i || i > boardLength) continue;
             if (nowPiece[x][i] == null || ((nowPiece[x][i] === nowNumber) && (y+1===i))) break;
             if (nowPiece[x][i] !== nowNumber && nowPiece[x][i] !== null) continue;
             if (nowPiece[x][i] === nowNumber) return true;
         }
 
         // 上方向（現在マスから上・縦を確認）
-        for (let i = y-1; i > 0; i--) {
-            if (0 > i || i > boardLength) continue;
+        for (let i = y-1; i > -1; i--) {
+            if (-1 > i || i > boardLength) continue;
             if (nowPiece[x][i] == null || ((nowPiece[x][i] === nowNumber) && (y-1===i))) break;
             if (nowPiece[x][i] !== nowNumber && nowPiece[x][i] !== null) continue;
             if (nowPiece[x][i] === nowNumber) return true;
@@ -255,7 +277,7 @@ function setCanDoOthello (x, y) {
 
         // 左上方向（現在マスから左上・斜めを確認）
         for (let i = y-1; i > 0; i--) {
-            if (0 > i || i > boardLength) continue;
+            if (-1 > i || i > boardLength) continue;
             if (nowPiece[x-(y-i)][i] == null || ((nowPiece[x-(y-i)][i] === nowNumber) && (y-1===i))) break;
             if (nowPiece[x-(y-i)][i] !== nowNumber && nowPiece[x-(y-i)][i] !== null) continue;
             if (nowPiece[x-(y-i)][i] === nowNumber) return true;
@@ -263,7 +285,7 @@ function setCanDoOthello (x, y) {
 
         // 右上方向（現在マスから右上・斜めを確認）
         for (let i = y-1; i > 0; i--) {
-            if (0 > i || i > boardLength) continue;
+            if (-1 > i || i > boardLength) continue;
             if (nowPiece[x+(y-i)][i] == null || ((nowPiece[x+(y-i)][i] === nowNumber) && (y-1===i))) break;
             if (nowPiece[x+(y-i)][i] !== nowNumber && nowPiece[x+(y-i)][i] !== null) continue;
             if (nowPiece[x+(y-i)][i] === nowNumber) return true;
@@ -271,7 +293,7 @@ function setCanDoOthello (x, y) {
 
         // 左下方向（現在マスから左下・斜めを確認）
         for (let i = y+1; i < boardLength; i++) {
-            if (0 > i || i > boardLength) continue;
+            if (-1 > i || i > boardLength) continue;
             if (nowPiece[x-(y-i)][i] == null || ((nowPiece[x-(y-i)][i] === nowNumber) && (y+1===i))) break;
             if (nowPiece[x-(y-i)][i] !== nowNumber && nowPiece[x-(y-i)][i] !== null) continue;
             if (nowPiece[x-(y-i)][i] === nowNumber) return true;
@@ -279,7 +301,7 @@ function setCanDoOthello (x, y) {
 
         // 右下方向（現在マスから右下・斜めを確認）
         for (let i = y+1; i < boardLength; i++) {
-            if (0 > i || i > boardLength) continue;
+            if (-1 > i || i > boardLength) continue;
             if (nowPiece[x+(y-i)][i] == null || ((nowPiece[x+(y-i)][i] === nowNumber) && (y+1===i))) break;
             if (nowPiece[x+(y-i)][i] !== nowNumber && nowPiece[x+(y-i)][i] !== null) continue;
             if (nowPiece[x+(y-i)][i] === nowNumber) return true;
@@ -294,9 +316,9 @@ function setCanDoOthello (x, y) {
 function setOthelloTurn (x, y) {
     if (x == null || y == null) return false;
     // 右方向
-    let rightCount = 0;
+    let rightCount = null;
     for (let i = x; i < boardLength; i++) {
-        if (0 > i || i > boardLength) continue;
+        if (-1 > i || i > boardLength) continue;
         if (nowPiece[i][y] == null) break;
         if (nowPiece[i][y] !== nowNumber) continue;
         if (x!==i) {
@@ -304,16 +326,16 @@ function setOthelloTurn (x, y) {
             break;
         }
     }
-    if (rightCount !== 0) {
+    if (rightCount !== null) {
         for (let i = x; i <= rightCount; i++) {
             nowPiece[i][y] = nowNumber;
         }
     }
 
     // 下方向
-    let downCount = 0;
+    let downCount = null;
     for (let i = y; i < boardLength; i++) {
-        if (0 > i || i > boardLength) continue;
+        if (-1 > i || i > boardLength) continue;
         if (nowPiece[x][i] == null) break;
         if (nowPiece[x][i] !== nowNumber) continue;
         if (y!==i) {
@@ -321,16 +343,16 @@ function setOthelloTurn (x, y) {
             break;
         }
     }
-    if (downCount !== 0) {
+    if (downCount !== null) {
         for (let i = y; i <= downCount; i++) {
             nowPiece[x][i] = nowNumber;
         }
     }
 
     // 左方向
-    let leftCount = 0;
-    for (let i = x; i > 0; i--) {
-        if (0 > i || i > boardLength) continue;
+    let leftCount = null;
+    for (let i = x; i > -1; i--) {
+        if (-1 > i || i > boardLength) continue;
         if (nowPiece[i][y] == null) break;
         if (nowPiece[i][y] !== nowNumber) continue;
         if (x!==i) {
@@ -338,16 +360,16 @@ function setOthelloTurn (x, y) {
             break;
         }
     }
-    if (leftCount !== 0) {
+    if (leftCount !== null) {
         for (let i = leftCount; i <= x; i++) {
             nowPiece[i][y] = nowNumber;
         }
     }
 
     // 上方向
-    let upCount = 0;
-    for (let i = y; i > 0; i--) {
-        if (0 > i || i > boardLength) continue;
+    let upCount = null;
+    for (let i = y; i > -1; i--) {
+        if (-1 > i || i > boardLength) continue;
         if (nowPiece[x][i] == null) break;
         if (nowPiece[x][i] !== nowNumber) continue;
         if (y!==i) {
@@ -355,16 +377,16 @@ function setOthelloTurn (x, y) {
             break;
         }
     }
-    if (upCount !== 0) {
+    if (upCount !== null) {
         for (let i = upCount; i <= y; i++) {
             nowPiece[x][i] = nowNumber;
         }
     }
 
     // 右上方向
-    let rightUpCount = 0;
+    let rightUpCount = null;
     for (let i = x; i < boardLength; i++) {
-        if (0 > i || i > boardLength) continue;
+        if (-1 > i || i > boardLength) continue;
         if (nowPiece[i][y+(x-i)] == null) break;
         if (nowPiece[i][y+(x-i)] !== nowNumber) continue;
         if (x!==i) {
@@ -372,16 +394,16 @@ function setOthelloTurn (x, y) {
             break;
         }
     }
-    if (rightUpCount !== 0) {
+    if (rightUpCount !== null) {
         for (let i = x; i <= rightUpCount; i++) {
             nowPiece[i][y+(x-i)] = nowNumber;
         }
     }
 
     // 左下方向
-    let leftDownCount = 0;
+    let leftDownCount = null;
     for (let i = y; i < boardLength; i++) {
-        if (0 > i || i > boardLength) continue;
+        if (-1 > i || i > boardLength) continue;
         if (nowPiece[x+(y-i)][i] == null) break;
         if (nowPiece[x+(y-i)][i] !== nowNumber) continue;
         if (y!==i) {
@@ -389,16 +411,16 @@ function setOthelloTurn (x, y) {
             break;
         }
     }
-    if (leftDownCount !== 0) {
+    if (leftDownCount !== null) {
         for (let i = y; i <= leftDownCount; i++) {
             nowPiece[x+(y-i)][i] = nowNumber;
         }
     }
 
     // 右下方向
-    let rightDownCount = 0;
+    let rightDownCount = null;
     for (let i = x; i < boardLength; i++) {
-        if (0 > i || i > boardLength) continue;
+        if (-1 > i || i > boardLength) continue;
         if (nowPiece[i][y-(x-i)] == null) break;
         if (nowPiece[i][y-(x-i)] !== nowNumber) continue;
         if (x!==i) {
@@ -406,16 +428,16 @@ function setOthelloTurn (x, y) {
             break;
         }
     }
-    if (rightDownCount !== 0) {
+    if (rightDownCount !== null) {
         for (let i = x; i <= rightDownCount; i++) {
             nowPiece[i][y-(x-i)] = nowNumber;
         }
     }
 
     // 左上方向
-    let leftUpCount = 0;
-    for (let i = y; i > 0; i--) {
-        if (0 > i || i > boardLength) continue;
+    let leftUpCount = null;
+    for (let i = y; i > -1; i--) {
+        if (-1 > i || i > boardLength) continue;
         if (nowPiece[x-(y-i)][i] == null) break;
         if (nowPiece[x-(y-i)][i] !== nowNumber) continue;
         if (y!==i) {
@@ -423,7 +445,7 @@ function setOthelloTurn (x, y) {
             break;
         }
     }
-    if (leftUpCount !== 0) {
+    if (leftUpCount !== null) {
         for (let i = leftUpCount; i <= y; i++) {
             nowPiece[x-(y-i)][i] = nowNumber;
         }
@@ -463,15 +485,15 @@ function drawOthelloCanvas () {
         let pieceXyR = [boardPoint[0] + ((nowX+1) * boardOneSize) + (boardLine*nowX) - (boardOneSize/2), boardPoint[1] + ((nowY+1) * boardOneSize) + (boardLine*nowY) - (boardOneSize/2), boardOneSize/2.3];
         if (nowX === nowPanel[0] && nowY === nowPanel[1] && nowPiece[nowX][nowY] == null && nowNumber === myNumber) {
             gContextSetPiece(pieceXyR);
-            g.fillStyle = "rgba(0,0,0,0.6)";
+            g.fillStyle = `rgba(${playerColor[nowNumber]}, 0.6)`;
             g.fill();
         } else if (nowPiece[nowX][nowY] !== null) {
             gContextSetPiece(pieceXyR);
-            g.fillStyle = playerColor[nowPiece[nowX][nowY]];
+            g.fillStyle = `rgba(${playerColor[nowPiece[nowX][nowY]]})`;
             g.fill();
         } else if (canPoint[nowX][nowY]) {
             gContextSetPiece(pieceXyR);
-            g.fillStyle = "rgba(0,0,0,0.2)";
+            g.fillStyle = `rgba(${playerColor[nowNumber]}, 0.2)`;
             g.fill();
         } else if (zeroCanPoint[nowX][nowY] && zeroIs) {
             gContextSetPiece(pieceXyR);
@@ -480,10 +502,39 @@ function drawOthelloCanvas () {
         }
         nowX++;
     }
+    // ボードの下に文字を書く
+    g.font = `${sizeWH/50}pt Arial`;
+    g.fillStyle = 'rgba(255, 255, 255)';
+    g.textAlign = "left";
+    g.textBaseline = "top";
+    let playerListPieceCount = {
+        1: 0,
+        2: 0,
+        3: 0,
+        4: 0
+    };
+    for (const nowPieceKey in nowPiece) {
+        for (const nowPieceKeyAs in nowPiece[nowPieceKey]) {
+            if (!nowPiece[nowPieceKey][nowPieceKeyAs]) continue;
+            playerListPieceCount[nowPiece[nowPieceKey][nowPieceKeyAs]]++;
+        }
+    }
+    g.fillText(`参加人数: ${playerList[3]?4:2}人 | ${playerList[nowNumber].name}の数: ${playerListPieceCount[nowNumber]}`, boardPoint[0], boardEndPoint[1]+sizeWH/200);
 }
 
 function gContextSetPiece(xyr) {
     g.beginPath();
     g.arc( xyr[0], xyr[1], xyr[2], 0, 360 * Math.PI / 180, false );
     return true;
+}
+
+function cpGo () {
+    let canPointFilter = [];
+    for (const canPointKey in canPoint) {
+        for (const canPointKeyAs in canPoint[canPointKey]) {
+            if (canPoint[canPointKey][canPointKeyAs]) canPointFilter.push([Number(canPointKey), Number(canPointKeyAs)]);
+        }
+    }
+    let selectPoint = canPointFilter[Math.floor(Math.random() * canPointFilter.length)];
+    canvasMouseClick(true, selectPoint);
 }
