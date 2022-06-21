@@ -30,7 +30,9 @@ function startMenuShow () {
     // ルームキー現在位置の表示
     g.beginPath();
     g.fillStyle = "rgba(0, 0, 0, 0.5)";
-    g.fillRect((canvas.width/2.37)+(roomKeyWidth/4)*keyInputCount, canvas.height/1.75, (roomKeyWidth/4)-(sizeWH/290), sizeWH/45);
+    g.fillRect(canvas.width/2+(roomKeyWidth/4)*(keyInputCount-2), canvas.height/1.75, (roomKeyWidth/4)-(sizeWH/290), sizeWH/45);
+    // マッチングボタン
+    //drawSq((canvas.width/2)/1.7, canvas.height/2.5, (canvas.width/2)/1.2, canvas.height/5, 20, "rgba(243, 243, 243)");
 }
 
 /*
