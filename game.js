@@ -16,6 +16,8 @@ let boardLine = 0;
 let canPoint = {};
 let zeroCanPoint = {}; // 一つもピースがなくなった場合に置ける場所
 let zeroIs = false;
+let startNow = false;
+let nowScreen = "startMenuShow"; // drawOthelloCanvas
 
 let playerColor = { // プレイヤー一覧
     1: [0, 0, 0],
@@ -58,6 +60,8 @@ let nowNumber = 1;
  初期設定
  */
 function init() {
+    getSize();
+    if (!startNow) return;
     // 全マスを一度リセット
     for (let i = -1; i < boardLength+1; i++) {
         nowPiece[i] = {};
@@ -83,8 +87,6 @@ function init() {
         nowPiece[boardLengthHalf - 1][boardLengthHalf] = 2;
         nowPiece[boardLengthHalf][boardLengthHalf] = 1;
     }
-    getSize();
-    drawOthelloCanvas();
 }
 
 /*
@@ -101,7 +103,14 @@ function getSize(){
     boardLine = sizeWH/200;
     boardPaddingWH = boardWH-(boardPadding*2) - (boardLength*boardLine);
     boardOneSize = (boardPaddingWH / boardLength);
-    drawOthelloCanvas();
+    switch (nowScreen) {
+        case "startMenuShow":
+            startMenuShow();
+            break;
+        case "drawOthelloCanvas":
+            drawOthelloCanvas();
+            break;
+    }
 }
 
 /*
@@ -124,12 +133,15 @@ window.addEventListener("load", function(){
     canvas.addEventListener("click", canvasMouseClick);
     // 初期設定
     init();
+    startMenuShow();
 });
 
 /*
  キャンバスクリック時の動作
  */
-function canvasMouseClick (cpu = false, panel = null) {
+function canvasMouseClick (cpu = false, panel = null)
+{
+    if (!startNow) return;
     let _panel = panel?panel:nowPanel;
     if (_panel[0] == null || _panel[1] == null || (nowNumber !== myNumber)&&!cpu) return;
     if (zeroIs) {
@@ -198,6 +210,7 @@ function nextPlayer () {
  キャンバス上でのマウスカーソル移動時の処理
  */
 function canvasMouseMove(e) {
+    if (!startNow) return;
     let rect = e.target.getBoundingClientRect()
     let _nowPanel = othelloXY(e.clientX - rect.left, e.clientY - rect.top);
     if (_nowPanel[0] >= 0 && _nowPanel[1] >= 0 && _nowPanel[0] < boardLength && _nowPanel[1] < boardLength) {
