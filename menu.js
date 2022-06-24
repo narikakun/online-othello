@@ -1,5 +1,16 @@
 let roomPassword = "0000";
-
+let numberButtonXy = {
+    1: {x: null, y: null},
+    2: {x: null, y: null},
+    3: {x: null, y: null},
+    4: {x: null, y: null},
+    5: {x: null, y: null},
+    6: {x: null, y: null},
+    7: {x: null, y: null},
+    8: {x: null, y: null},
+    9: {x: null, y: null},
+    0: {x: null, y: null}
+}
 /*
  スタート画面を出す
  */
@@ -17,20 +28,35 @@ function startMenuShow () {
     g.fillText(`オンラインオセロゲーム`, canvas.width/2, canvas.height/10);
     // ルームキー入力部分
     g.font = `${sizeWH/22}pt Arial`;
-    g.fillText(`ルームキー`, canvas.width/2, canvas.height/4);
-    drawSq((canvas.width/2)/1.7, canvas.height/2.5, (canvas.width/2)/1.2, canvas.height/5, 20, "rgba(243, 243, 243)");
+    g.fillStyle = 'rgba(200, 200, 200)';
+    g.fillText(`ルームキー`, canvas.width/2, canvas.height/4.5);
+    drawSq((canvas.width/2)/1.7, canvas.height/3.2, (canvas.width/2)/1.2, canvas.height/5, 20, "rgba(243, 243, 243)");
     // ルームキー表示
     g.beginPath();
     g.font = `${sizeWH/8}pt Arial`;
     g.fillStyle = 'rgba(0,0,0)';
     g.textAlign = "center";
     g.textBaseline = "middle";
-    g.fillText(roomPassword, canvas.width/2, canvas.height/1.95);
+    g.fillText(roomPassword, canvas.width/2, canvas.height/2.4);
     let roomKeyWidth = g.measureText(roomPassword).width;
     // ルームキー現在位置の表示
     g.beginPath();
     g.fillStyle = "rgba(0, 0, 0, 0.5)";
-    g.fillRect(canvas.width/2+(roomKeyWidth/4)*(keyInputCount-2), canvas.height/1.75, (roomKeyWidth/4)-(sizeWH/290), sizeWH/45);
+    g.fillRect(canvas.width/2+(roomKeyWidth/4)*(keyInputCount-2), canvas.height/2.1, (roomKeyWidth/4)-(sizeWH/290), sizeWH/45);
+    // 数字入力ボタン
+    let numberButtonWH = (sizeWH/4);
+    let numberButtonOneWH = (sizeWH)/10;
+    for (let i = 0; i < 10; i++) {
+        let drawBoxX = numberButtonWH+(numberButtonOneWH*i)+((numberButtonOneWH/15)*i);
+        let drawBoxY = canvas.height/1.7;
+        drawSq(drawBoxX, drawBoxY, numberButtonOneWH, numberButtonOneWH, 20, "rgba(243, 243, 243)");
+        g.beginPath();
+        g.font = `${sizeWH/14}pt Arial`;
+        g.fillStyle = 'rgba(0,0,0)';
+        g.textAlign = "left";
+        g.textBaseline = "top";
+        g.fillText(String(i), drawBoxX + (numberButtonOneWH/4.5), drawBoxY + (numberButtonOneWH/9));
+    }
     // マッチングボタン
     //drawSq((canvas.width/2)/1.7, canvas.height/2.5, (canvas.width/2)/1.2, canvas.height/5, 20, "rgba(243, 243, 243)");
 }
@@ -45,7 +71,7 @@ document.addEventListener('keyup', keyUpEvent);
 
 function keyPressEvent(e) {
     if (!keyUpIs) return;
-    if (!Number(e.key)) return;
+    if (isNaN(e.key)) return;
     roomPassword = roomPassword.substr(0, keyInputCount) + e.key + roomPassword.substr(keyInputCount+1);
     keyInputCount++;
     if (keyInputCount>=4) keyInputCount = 0;
