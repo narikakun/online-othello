@@ -17,7 +17,11 @@ let canPoint = {};
 let zeroCanPoint = {}; // 一つもピースがなくなった場合に置ける場所
 let zeroIs = false;
 let startNow = false;
-let nowScreen = "startMenuShow"; // drawOthelloCanvas
+let nowScreen = "drawOthelloCanvas"; // drawOthelloCanvas
+let statusMessage = {
+    color: [255, 255, 255],
+    string: ""
+};
 
 let playerColor = { // プレイヤー一覧
     1: [0, 0, 0],
@@ -60,8 +64,6 @@ let nowNumber = 1;
  初期設定
  */
 function init() {
-    getSize();
-    if (!startNow) return;
     // 全マスを一度リセット
     for (let i = -1; i < boardLength+1; i++) {
         nowPiece[i] = {};
@@ -73,6 +75,9 @@ function init() {
             zeroCanPoint[i][ib] = null;
         }
     }
+    getSize();
+    if (!startNow) return;
+    statusMessage.string = "ゲームを開始します。";
     let boardLengthHalf = Math.floor(boardLength/2);
     nowPiece[boardLengthHalf-1][boardLengthHalf-1] = 1; // 左上
     nowPiece[boardLengthHalf][boardLengthHalf-1] = 2; // 右上
@@ -134,6 +139,7 @@ window.addEventListener("load", function(){
     // 初期設定
     init();
     startMenuShow();
+    websocketStart();
 });
 
 /*
@@ -518,6 +524,7 @@ function drawOthelloCanvas () {
         nowX++;
     }
     // ボードの下に文字を書く
+    g.beginPath ();
     g.font = `${sizeWH/50}pt Arial`;
     g.fillStyle = 'rgba(255, 255, 255)';
     g.textAlign = "left";
@@ -535,6 +542,13 @@ function drawOthelloCanvas () {
         }
     }
     g.fillText(`参加人数: ${playerList[3]?4:2}人 | ${playerList[nowNumber].name}の数: ${playerListPieceCount[nowNumber]}`, boardPoint[0], boardEndPoint[1]+sizeWH/200);
+    // ボード上にメッセージを置く
+    g.beginPath ();
+    g.font = `${sizeWH/50}pt Arial`;
+    g.fillStyle = `rgba(${statusMessage.color[0]}, ${statusMessage.color[1]}, ${statusMessage.color[2]})`;
+    g.textAlign = "left";
+    g.textBaseline = "bottom";
+    g.fillText(statusMessage.string, boardPoint[0], boardPoint[1]-(sizeWH/50));
 }
 
 function gContextSetPiece(xyr) {
