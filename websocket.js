@@ -12,7 +12,7 @@ let WebSocketSettings = {
     mRoomKey: String(Math.floor( Math.random() * (9999-1111) ) + 1111),
     roomHost: null,
     closed: false,
-    playerMax: 2
+    playerMax: 4
 }
 let _wsTimer = null;
 
