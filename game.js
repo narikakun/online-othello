@@ -37,25 +37,7 @@ let playerList = {
     4: null
 }
 
-playerList[1] = {
-    name: "黒",
-    cpu: false
-};
-playerList[2] = {
-    name: "白",
-    cpu: false
-};
-/*
-playerList[3] = {
-    name: "赤",
-    cpu: true
-};
-playerList[4] = {
-    name: "青",
-    cpu: true
-};
-
- */
+let playerColorString = ["", "黒", "白", "赤", "青"]
 
 let myNumber =  1;
 let nowNumber = 1;
@@ -92,6 +74,7 @@ function init() {
         nowPiece[boardLengthHalf - 1][boardLengthHalf] = 2;
         nowPiece[boardLengthHalf][boardLengthHalf] = 1;
     }
+    getSize();
 }
 
 /*
@@ -149,16 +132,25 @@ function canvasMouseClick (cpu = false, panel = null)
 {
     if (!startNow) return;
     let _panel = panel?panel:nowPanel;
-    if (_panel[0] == null || _panel[1] == null || (nowNumber !== myNumber)&&!cpu) return;
+    if (_panel[0] == null || _panel[1] == null || (nowNumber !== myNumber) || !cpu) return;
     if (zeroIs) {
         if (!zeroCanPoint[_panel[0]][_panel[1]]) return;
     } else {
         if (!canPoint[_panel[0]][_panel[1]]) return;
     }
-    zeroIs = false;
-    nowPiece[_panel[0]][_panel[1]] = nowNumber;
-    setOthelloTurn(_panel[0],_panel[1]);
-    nextPlayer();
+    if (WebSocketSettings.host) {
+        zeroIs = false;
+        nowPiece[_panel[0]][_panel[1]] = nowNumber;
+        setOthelloTurn(_panel[0], _panel[1]);
+        nextPlayer();
+    } else {
+        _ws.send(JSON.stringify({
+            "to": WebSocketSettings.roomHost,
+            "type": "setOthello",
+            "roomKey": WebSocketSettings.toGameRoomKey,
+            "panel": _panel
+        }));
+    }
 }
 
 /*
@@ -166,10 +158,8 @@ function canvasMouseClick (cpu = false, panel = null)
  */
 function nextPlayer () {
     nowNumber++;
-    myNumber++;
     if ((playerList[3]&&playerList[4])?nowNumber > 4:nowNumber > 2) {
         nowNumber = 1;
-        myNumber++;
     }
     drawOthelloCanvas();
     let canPointCount = 0;
@@ -181,12 +171,13 @@ function nextPlayer () {
     if (canPointCount === 0) {
         let nowPieceCount = 0;
         let nowPieceNullCount = 0;
-        for (const nowPieceKey in nowPiece) {
-            for (const nowPieceKeyAs in nowPiece[nowPieceKey]) {
-                if (nowPiece[nowPieceKey][nowPieceKeyAs] === nowNumber) nowPieceCount++;
-                if (nowPiece[nowPieceKey][nowPieceKeyAs] == null) nowPieceNullCount++;
+        for (let i = 0; i < boardLength; i++) {
+            for (let i2 = 0; i2 < boardLength; i2++) {
+                if (nowPiece[i][i2] === nowNumber) nowPieceCount++;
+                if (nowPiece[i][i2] == null) nowPieceNullCount++;
             }
         }
+        console.log(`${nowPieceCount} ${nowPieceNullCount}`)
         if (nowPieceNullCount === 0) {
             console.log("終わり");
             nowNumber = 5;
@@ -207,10 +198,23 @@ function nextPlayer () {
         } else {
             // スキップ
             nextPlayer();
+            return;
         }
     } else {
         if (playerList[nowNumber].cpu) cpGo();
     }
+    if (WebSocketSettings.host) {
+        _ws.send(JSON.stringify({
+            "toH": WebSocketSettings.toGameRoomKey,
+            "type": "nextPlayerRefresh",
+            "roomKey": WebSocketSettings.toGameRoomKey,
+            "nowNumber": nowNumber,
+            "nowPiece": nowPiece,
+            "zeroCanPoint": zeroCanPoint,
+            "zeroIs": zeroIs
+        }));
+    }
+    drawOthelloCanvas();
 }
 /*
  キャンバス上でのマウスカーソル移動時の処理
@@ -523,25 +527,27 @@ function drawOthelloCanvas () {
         }
         nowX++;
     }
-    // ボードの下に文字を書く
-    g.beginPath ();
-    g.font = `${sizeWH/50}pt Arial`;
-    g.fillStyle = 'rgba(255, 255, 255)';
-    g.textAlign = "left";
-    g.textBaseline = "top";
-    let playerListPieceCount = {
-        1: 0,
-        2: 0,
-        3: 0,
-        4: 0
-    };
-    for (const nowPieceKey in nowPiece) {
-        for (const nowPieceKeyAs in nowPiece[nowPieceKey]) {
-            if (!nowPiece[nowPieceKey][nowPieceKeyAs]) continue;
-            playerListPieceCount[nowPiece[nowPieceKey][nowPieceKeyAs]]++;
+    if (startNow) {
+        // ボードの下に文字を書く
+        g.beginPath();
+        g.font = `${sizeWH / 50}pt Arial`;
+        g.fillStyle = 'rgba(255, 255, 255)';
+        g.textAlign = "left";
+        g.textBaseline = "top";
+        let playerListPieceCount = {
+            1: 0,
+            2: 0,
+            3: 0,
+            4: 0
+        };
+        for (const nowPieceKey in nowPiece) {
+            for (const nowPieceKeyAs in nowPiece[nowPieceKey]) {
+                if (!nowPiece[nowPieceKey][nowPieceKeyAs]) continue;
+                playerListPieceCount[nowPiece[nowPieceKey][nowPieceKeyAs]]++;
+            }
         }
+        g.fillText(`参加人数: ${playerList[3] ? 4 : 2}人 | ${playerList[nowNumber].name}の数: ${playerListPieceCount[nowNumber]} | あなたは ${playerColorString[myNumber]}`, boardPoint[0], boardEndPoint[1] + sizeWH / 200);
     }
-    g.fillText(`参加人数: ${playerList[3]?4:2}人 | ${playerList[nowNumber].name}の数: ${playerListPieceCount[nowNumber]}`, boardPoint[0], boardEndPoint[1]+sizeWH/200);
     // ボード上にメッセージを置く
     g.beginPath ();
     g.font = `${sizeWH/50}pt Arial`;
