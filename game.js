@@ -17,11 +17,16 @@ let canPoint = {};
 let zeroCanPoint = {}; // 一つもピースがなくなった場合に置ける場所
 let zeroIs = false;
 let startNow = false;
-let nowScreen = "drawOthelloCanvas"; // drawOthelloCanvas
 let statusMessage = {
     color: [255, 255, 255],
     string: ""
 };
+let _clicked = false; // 連続クリック対策
+let showMessage = {
+    color: [255, 255, 255],
+    string: "",
+    show: false
+}
 
 let playerColor = { // プレイヤー一覧
     1: [0, 0, 0],
@@ -39,8 +44,8 @@ let playerList = {
 
 let playerColorString = ["", "黒", "白", "赤", "青"]
 
-let myNumber =  1;
-let nowNumber = 1;
+let myNumber = 99;
+let nowNumber = 99;
 
 /*
  初期設定
@@ -57,7 +62,6 @@ function init() {
             zeroCanPoint[i][ib] = null;
         }
     }
-    getSize();
     if (!startNow) return;
     statusMessage.string = "ゲームを開始します。";
     let boardLengthHalf = Math.floor(boardLength/2);
@@ -74,7 +78,7 @@ function init() {
         nowPiece[boardLengthHalf - 1][boardLengthHalf] = 2;
         nowPiece[boardLengthHalf][boardLengthHalf] = 1;
     }
-    getSize();
+    nextPlayer();
 }
 
 /*
@@ -91,14 +95,6 @@ function getSize(){
     boardLine = sizeWH/200;
     boardPaddingWH = boardWH-(boardPadding*2) - (boardLength*boardLine);
     boardOneSize = (boardPaddingWH / boardLength);
-    switch (nowScreen) {
-        case "startMenuShow":
-            startMenuShow();
-            break;
-        case "drawOthelloCanvas":
-            drawOthelloCanvas();
-            break;
-    }
 }
 
 /*
@@ -120,8 +116,8 @@ window.addEventListener("load", function(){
     canvas.addEventListener("mousemove", canvasMouseMove);
     canvas.addEventListener("click", canvasMouseClick);
     // 初期設定
+    getSize();
     init();
-    startMenuShow();
     websocketStart();
 });
 
@@ -131,8 +127,13 @@ window.addEventListener("load", function(){
 function canvasMouseClick (cpu = false, panel = null)
 {
     if (!startNow) return;
+    if (_clicked) return;
+    _clicked = true;
+    clearInterval(clicked_interval);
+    _clicked = true;
     let _panel = panel?panel:nowPanel;
     if (_panel[0] == null || _panel[1] == null || (nowNumber !== myNumber) || !cpu) return;
+    clicked_interval = setInterval(() => _clicked = false, 1000);
     if (zeroIs) {
         if (!zeroCanPoint[_panel[0]][_panel[1]]) return;
     } else {
@@ -154,6 +155,23 @@ function canvasMouseClick (cpu = false, panel = null)
 }
 
 /*
+ 誰のターンかどうかのメッセージ
+ */
+function showPlayerMessage () {
+    if (myNumber == nowNumber) {
+        showMessage.string = "あなたのターンです。";
+    } else {
+        showMessage.string = `${playerColorString[nowNumber]}のターンです。`;
+    }
+    showMessage.show = true;
+    _clicked = true;
+    setTimeout(()=>{
+        showMessage.show = false;
+        _clicked = false;
+    }, 2000);
+}
+
+/*
  次のプレイヤーに回す
  */
 function nextPlayer () {
@@ -161,7 +179,8 @@ function nextPlayer () {
     if ((playerList[3]&&playerList[4])?nowNumber > 4:nowNumber > 2) {
         nowNumber = 1;
     }
-    drawOthelloCanvas();
+    _clicked = false;
+    canPointSet();
     let canPointCount = 0;
     for (const canPointKey in canPoint) {
         for (const canPointKeyAs in canPoint[canPointKey]) {
@@ -211,10 +230,11 @@ function nextPlayer () {
             "nowNumber": nowNumber,
             "nowPiece": nowPiece,
             "zeroCanPoint": zeroCanPoint,
-            "zeroIs": zeroIs
+            "zeroIs": zeroIs,
+            "canPoint": canPoint
         }));
+        showPlayerMessage();
     }
-    drawOthelloCanvas();
 }
 /*
  キャンバス上でのマウスカーソル移動時の処理
@@ -228,7 +248,6 @@ function canvasMouseMove(e) {
     } else {
         nowPanel = [null, null];
     }
-    drawOthelloCanvas();
 }
 
 /*
@@ -478,14 +497,26 @@ function setOthelloTurn (x, y) {
 }
 
 /*
+ 置けるマスをCanPointとして保存
+ */
+function canPointSet () {
+    for (let i = 0; i < boardLength; i++) {
+        canPoint[i] = {};
+        for (let ib= 0; ib < boardLength; ib++) {
+            canPoint[i][ib] = setCanDoOthello(i, ib);
+        }
+    }
+}
+
+/*
  オセロのキャンバスを作る
  */
 function drawOthelloCanvas () {
-    // キャンバスをリセット
+    // キャンバスをリセット（黒色）
     g.beginPath ();
     g.fillStyle = "rgba(0, 0, 0)";
     g.fillRect(0, 0, canvas.width, canvas.height);
-    // 背景を描写（黒色）
+    // 背景を描写
     g.beginPath ();
     g.fillStyle = "rgba(19, 19, 19)";
     g.fillRect((canvas.width/2)-(boardWH/2)-boardPadding, (canvas.height/2)-(boardWH/2)-boardPadding, boardWH, boardWH);
@@ -493,12 +524,6 @@ function drawOthelloCanvas () {
     boardEndPoint = [boardPoint[0] + (boardLength * boardOneSize) + ((boardLine) * boardLength), boardPoint[1] + (boardLength * boardOneSize) + ((boardLine) * boardLength)];
     let nowX = 0;
     let nowY = 0;
-    for (let i = 0; i < boardLength; i++) {
-        canPoint[i] = {};
-        for (let ib= 0; ib < boardLength; ib++) {
-            canPoint[i][ib] = setCanDoOthello(i, ib);
-        }
-    }
     for (let i = 0; i < boardLength*boardLength; i++) {
         if (nowX >= boardLength) {
             nowY++;
@@ -547,6 +572,21 @@ function drawOthelloCanvas () {
             }
         }
         g.fillText(`参加人数: ${playerList[3] ? 4 : 2}人 | ${playerList[nowNumber].name}の数: ${playerListPieceCount[nowNumber]} | あなたは ${playerColorString[myNumber]}`, boardPoint[0], boardEndPoint[1] + sizeWH / 200);
+    } else {
+        // タイトル画面
+        g.beginPath();
+        g.font = `${sizeWH / 15}pt Arial`;
+        g.fillStyle = `rgba(255,255,255)`;
+        g.textAlign = "left";
+        g.textBaseline = "top";
+        let titleA = "オセロ".split("");
+        for (let i = 0; i < titleA.length; i++) {
+            g.fillText(titleA[i], boardPoint[0] + ((i+1) * boardOneSize) + (boardLine*i) + (boardOneSize/8), boardPoint[1] + (1 * boardOneSize) + (boardLine*0) + (boardOneSize/5));
+        }
+        let titleB = "ゲーム".split("");
+        for (let i = 0; i < titleB.length; i++) {
+            g.fillText(titleB[i], boardPoint[0] + ((i+4) * boardOneSize) + (boardLine*(i+3)) + (boardOneSize/8), boardPoint[1] + (2 * boardOneSize) + (boardLine*1) + (boardOneSize/5));
+        }
     }
     // ボード上にメッセージを置く
     g.beginPath ();
@@ -555,14 +595,34 @@ function drawOthelloCanvas () {
     g.textAlign = "left";
     g.textBaseline = "bottom";
     g.fillText(statusMessage.string, boardPoint[0], boardPoint[1]-(sizeWH/50));
+    // 画面中央メッセージの描写
+    if (showMessage.show) {
+        // メッセージ背景
+        g.beginPath ();
+        g.fillStyle = "rgba(68, 68, 68, 0.7)";
+        g.fillRect(boardPoint[0]-(sizeWH/30), ((boardEndPoint[1]-boardPoint[1])/2)-(sizeWH/10), (boardEndPoint[0]-boardPoint[0])+((sizeWH/30)*2), ((sizeWH/10)*2));
+        // メッセージを描写
+        g.beginPath();
+        g.font = `${sizeWH / 20}pt Arial`;
+        g.fillStyle = `rgba(${showMessage.color[0]}, ${showMessage.color[1]}, ${showMessage.color[2]})`;
+        g.textAlign = "center";
+        g.textBaseline = "middle";
+        g.fillText(showMessage.string, boardPoint[0]+((boardEndPoint[0]-boardPoint[0])/2), (boardEndPoint[1]-boardPoint[1])/2);
+    }
 }
 
+/*
+ ピースを描写する
+ */
 function gContextSetPiece(xyr) {
     g.beginPath();
     g.arc( xyr[0], xyr[1], xyr[2], 0, 360 * Math.PI / 180, false );
     return true;
 }
 
+/*
+ CPUの動作用
+ */
 function cpGo () {
     let canPointFilter = [];
     for (const canPointKey in canPoint) {
@@ -573,3 +633,15 @@ function cpGo () {
     let selectPoint = canPointFilter[Math.floor(Math.random() * canPointFilter.length)];
     canvasMouseClick(true, selectPoint);
 }
+
+/*
+ 100msごとに描写更新
+ */
+setInterval(() => {
+    drawOthelloCanvas();
+}, 100);
+
+/*
+ 連続クリック防止（バグ防止のため定期解除）
+ */
+let clicked_interval = setInterval(() => _clicked = false, 1000);

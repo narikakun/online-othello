@@ -12,8 +12,10 @@ let WebSocketSettings = {
     mRoomKey: String(Math.floor( Math.random() * (9999-1111) ) + 1111),
     roomHost: null,
     closed: false,
-    playerMax: 4
+    playerMax: 2,
+    playerListRoom: []
 }
+
 let _wsTimer = null;
 
 //OsakaHumanManyMany
@@ -23,14 +25,12 @@ function websocketStart() {
     // WebSocketサーバーに接続
     statusMessage.color = [255, 255, 255];
     statusMessage.string = "サーバーに接続中です...";
-    getSize();
     _ws = new WebSocket(WebSocketSettings.ws.url);
     //接続通知
     _ws.onopen = function(event) {
         WebSocketSettings.closed = false;
         statusMessage.color = [255, 255, 255];
         statusMessage.string = "サーバーに接続しました...ログインしています...";
-        getSize();
         _ws.send(JSON.stringify(	{"auth":WebSocketSettings.userId,"passwd":WebSocketSettings.userPwd}))
         //メッセージ受信
         _ws.onmessage = function(event) {
@@ -40,34 +40,48 @@ function websocketStart() {
                 if (data.auth == "OK") {
                     statusMessage.color = [255, 255, 255];
                     statusMessage.string = "ログインしました。ルームに参加中です...";
-                    getSize();
                     _ws.send(JSON.stringify({"joinHub": WebSocketSettings.toGameRoomKey||WebSocketSettings.roomKey}))
                 } else {
                     statusMessage.string = "認証に失敗しました。";
                     statusMessage.color = [255, 0, 0];
-                    getSize();
                     return;
                 }
             }
             if (data.joinHub) {
                 if (data.joinHub == "OK") {
                     if (WebSocketSettings.toGameRoomKey) {
-                        ws_startGame();
+                        statusMessage.color = [255, 255, 255];
+                        WebSocketSettings.playerListRoom = [];
+                        WebSocketSettings.playerListRoom.push(WebSocketSettings.userId);
+                        statusMessage.string = `ルームに参加しました。他のプレイヤーを待っています... (${WebSocketSettings.playerListRoom.length}/${WebSocketSettings.playerListA.length})`;
+                        _ws.send(JSON.stringify({"toH":WebSocketSettings.toGameRoomKey, "type":"joinedCheck"}));
                     } else {
                         statusMessage.color = [255, 255, 255];
                         statusMessage.string = `ルームに参加しました。プレイヤーを探しています... (${WebSocketSettings.playerListA.length+1}/${WebSocketSettings.playerMax})`;
                         WebSocketSettings.playerListA.push(WebSocketSettings.userId);
-                        getSize();
                         _ws.send(JSON.stringify({"toH":WebSocketSettings.roomKey, "type":"matchingPlease"}));
                     }
                 } else {
                     statusMessage.string = "ルームの接続に失敗しました。";
                     statusMessage.color = [255, 0, 0];
-                    getSize();
                     return;
                 }
             }
             if (data.type) {
+                if (data.type == "joinedCheck") {
+                    statusMessage.color = [255, 255, 255];
+                    WebSocketSettings.playerListRoom.push(data.FROM);
+                    statusMessage.string = `ルームに参加しました。他のプレイヤーを待っています... (${WebSocketSettings.playerListRoom.length}/${WebSocketSettings.playerListA.length})`;
+                    if (WebSocketSettings.host) {
+                        if (WebSocketSettings.playerListA.length >= WebSocketSettings.playerListRoom.length) {
+                            _ws.send(JSON.stringify({"toH":WebSocketSettings.toGameRoomKey, "type":"startGame"}));
+                            ws_startGame();
+                        }
+                    }
+                }
+                if (data.type == "startGame") {
+                    ws_startGame();
+                }
                 if (data.type == "matchingPlease") {
                     if (!WebSocketSettings.host || WebSocketSettings.playerListA.length >= WebSocketSettings.playerMax) return;
                     _ws.send(JSON.stringify({"to":data.FROM, "type":"matchingOK", "list":WebSocketSettings.playerListA, "myRoomKey": WebSocketSettings.mRoomKey}));
@@ -84,7 +98,6 @@ function websocketStart() {
                         _ws.send(JSON.stringify({"to": data.FROM, "type": "matchingYourHost", "list": WebSocketSettings.playerListA, "roomKey": data.myRoomKey}));
                         statusMessage.string = `ほかのプレイヤーの参加を待っています... (${WebSocketSettings.playerListA.length}/${WebSocketSettings.playerMax})`;
                         WebSocketSettings.roomHost = data.FROM;
-                        getSize();
                     }
                 }
                 if (data.type == "matchingYourHost") {
@@ -112,11 +125,9 @@ function websocketStart() {
                                 }));
                             }
                             statusMessage.string = `まもなく始まります... (${waitTime})`;
-                            getSize();
                             waitTime--;
                         }, 1000);
                     }
-                    getSize();
                 }
                 if (data.type == "matchingPlayerList") {
                     WebSocketSettings.playerListA = data.list;
@@ -125,11 +136,9 @@ function websocketStart() {
                     } else {
                         statusMessage.string = `ほかのプレイヤーの参加を待っています... (${WebSocketSettings.playerListA.length}/${WebSocketSettings.playerMax})`;
                     }
-                    getSize();
                 }
                 if (data.type == "matchingTimer") {
                     statusMessage.string = `まもなく始まります... (${data.waitTime})`;
-                    getSize();
                 }
 
                 if (data.type == "ping") {
@@ -145,9 +154,10 @@ function websocketStart() {
                     nowPiece = data.nowPiece;
                     nowNumber = data.nowNumber;
                     zeroCanPoint = data.zeroCanPoint;
+                    canPoint = data.canPoint;
                     zeroIs = data.zeroIs;
-                    drawOthelloCanvas();
-                    getSize();
+                    _clicked = false;
+                    showPlayerMessage();
                 }
                 if (data.type == "setOthello") {
                     zeroIs = false;
@@ -163,7 +173,6 @@ function websocketStart() {
                     startNow = false;
                     statusMessage.string = "相手が切断したため終了しました。";
                     statusMessage.color = [255, 0, 0];
-                    getSize();
                     return;
                 } else {
                     if (WebSocketSettings.host) {
@@ -181,19 +190,16 @@ function websocketStart() {
                                 "roomKey": WebSocketSettings.mRoomKey
                             }));
                         }
-                        getSize();
                     } else {
                         if (WebSocketSettings.roomHost == data.user) {
                             statusMessage.string = "ホストユーザーが抜けたため切断しました。";
                             statusMessage.color = [255, 0, 0];
-                            getSize();
                             return;
                         }
                     }
                 }
             }
             if (data.error) {
-                getSize();
                 return;
             }
         };
@@ -203,7 +209,6 @@ function websocketStart() {
             if (WebSocketSettings.closed) return;
             statusMessage.string = "サーバーから切断されました。";
             statusMessage.color = [255, 0, 0];
-            getSize();
         };
     };
 
@@ -212,7 +217,6 @@ function websocketStart() {
         console.error(error);
         statusMessage.string = "エラーが発生しました。";
         statusMessage.color = [255, 0, 0];
-        getSize();
     };
 };
 
@@ -236,7 +240,6 @@ function ws_startGame () {
     statusMessage.color = [255, 255, 255];
     statusMessage.string = "ゲームを開始します。";
     startNow = true;
-    nowScreen = "drawOthelloCanvas";
     init();
 
 }
