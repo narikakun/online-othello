@@ -2,7 +2,7 @@ let WebSocketSettings = {
     ws: {
         url: "wss://cloud.achex.ca/nakn_jp_online_othello"
     },
-    roomKey: "default",
+    roomKey: "0000",
     userId: String(Math.floor( Math.random() * (9999-1111) ) + 1111),
     userPwd: String(Math.floor( Math.random() * (9999-1111) ) + 1111),
     toGameRoomKey: null,

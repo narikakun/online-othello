@@ -132,12 +132,23 @@ function canvasMouseClick (cpu = false, panel = null)
     clearInterval(clicked_interval);
     _clicked = true;
     let _panel = panel?panel:nowPanel;
-    if (_panel[0] == null || _panel[1] == null || (nowNumber !== myNumber) || !cpu) return;
     clicked_interval = setInterval(() => _clicked = false, 1000);
+    if (_panel[0] == null || _panel[1] == null) {
+        _clicked = false;
+        return;
+    }
+    if ((nowNumber !== myNumber) || !cpu) return;
+    _clicked = true;
     if (zeroIs) {
-        if (!zeroCanPoint[_panel[0]][_panel[1]]) return;
+        if (!zeroCanPoint[_panel[0]][_panel[1]]) {
+            _clicked = false;
+            return;
+        }
     } else {
-        if (!canPoint[_panel[0]][_panel[1]]) return;
+        if (!canPoint[_panel[0]][_panel[1]]) {
+            _clicked = false;
+            return;
+        }
     }
     if (WebSocketSettings.host) {
         zeroIs = false;
@@ -574,19 +585,7 @@ function drawOthelloCanvas () {
         g.fillText(`参加人数: ${playerList[3] ? 4 : 2}人 | ${playerList[nowNumber].name}の数: ${playerListPieceCount[nowNumber]} | あなたは ${playerColorString[myNumber]}`, boardPoint[0], boardEndPoint[1] + sizeWH / 200);
     } else {
         // タイトル画面
-        g.beginPath();
-        g.font = `${sizeWH / 15}pt Arial`;
-        g.fillStyle = `rgba(255,255,255)`;
-        g.textAlign = "left";
-        g.textBaseline = "top";
-        let titleA = "オセロ".split("");
-        for (let i = 0; i < titleA.length; i++) {
-            g.fillText(titleA[i], boardPoint[0] + ((i+1) * boardOneSize) + (boardLine*i) + (boardOneSize/8), boardPoint[1] + (1 * boardOneSize) + (boardLine*0) + (boardOneSize/5));
-        }
-        let titleB = "ゲーム".split("");
-        for (let i = 0; i < titleB.length; i++) {
-            g.fillText(titleB[i], boardPoint[0] + ((i+4) * boardOneSize) + (boardLine*(i+3)) + (boardOneSize/8), boardPoint[1] + (2 * boardOneSize) + (boardLine*1) + (boardOneSize/5));
-        }
+        showTitleScreen();
     }
     // ボード上にメッセージを置く
     g.beginPath ();
@@ -594,7 +593,7 @@ function drawOthelloCanvas () {
     g.fillStyle = `rgba(${statusMessage.color[0]}, ${statusMessage.color[1]}, ${statusMessage.color[2]})`;
     g.textAlign = "left";
     g.textBaseline = "bottom";
-    g.fillText(statusMessage.string, boardPoint[0], boardPoint[1]-(sizeWH/50));
+    g.fillText(statusMessage.string + ` | ${new Date().getTime()} | ${_clicked}`, boardPoint[0], boardPoint[1]-(sizeWH/50));
     // 画面中央メッセージの描写
     if (showMessage.show) {
         // メッセージ背景
@@ -608,6 +607,31 @@ function drawOthelloCanvas () {
         g.textAlign = "center";
         g.textBaseline = "middle";
         g.fillText(showMessage.string, boardPoint[0]+((boardEndPoint[0]-boardPoint[0])/2), (boardEndPoint[1]-boardPoint[1])/2);
+    }
+}
+
+/*
+ タイトル画面
+ */
+function showTitleScreen () {
+    // タイトル文字
+    g.beginPath();
+    g.font = `${sizeWH / 15}pt Arial`;
+    g.fillStyle = `rgba(255,255,255)`;
+    g.textAlign = "left";
+    g.textBaseline = "top";
+    let titleA = "オセロ".split("");
+    for (let i = 0; i < titleA.length; i++) {
+        g.fillText(titleA[i], boardPoint[0] + ((i+1) * boardOneSize) + (boardLine*i) + (boardOneSize/8), boardPoint[1] + (1 * boardOneSize) + (boardLine*0) + (boardOneSize/5));
+    }
+    let titleB = "ゲーム".split("");
+    for (let i = 0; i < titleB.length; i++) {
+        g.fillText(titleB[i], boardPoint[0] + ((i+4) * boardOneSize) + (boardLine*(i+3)) + (boardOneSize/8), boardPoint[1] + (2 * boardOneSize) + (boardLine*1) + (boardOneSize/5));
+    }
+    // マッチング番号
+    let tRoomNumber = WebSocketSettings.roomKey.split("");
+    for (let i = 0; i < tRoomNumber.length; i++) {
+        g.fillText(tRoomNumber[i], boardPoint[0] + ((i+2) * boardOneSize) + (boardLine*i+1) + (boardOneSize/3.5), boardPoint[1] + (5 * boardOneSize) + (boardLine*4) + (boardOneSize/5));
     }
 }
 
