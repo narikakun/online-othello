@@ -12,8 +12,10 @@ let WebSocketSettings = {
     mRoomKey: String(Math.floor( Math.random() * (9999-1111) ) + 1111),
     roomHost: null,
     closed: false,
-    playerMax: 2,
-    playerListRoom: []
+    playerMax: 4,
+    playerListRoom: [],
+    connected: false,
+    started: false
 }
 
 let _wsTimer = null;
@@ -22,6 +24,7 @@ let _wsTimer = null;
 let _ws;
 function websocketStart() {
     if (_ws) return;
+    roomKeySetIs = true;
     // WebSocketサーバーに接続
     statusMessage.color = [255, 255, 255];
     statusMessage.string = "サーバーに接続中です...";
@@ -73,7 +76,7 @@ function websocketStart() {
                     WebSocketSettings.playerListRoom.push(data.FROM);
                     statusMessage.string = `ルームに参加しました。他のプレイヤーを待っています... (${WebSocketSettings.playerListRoom.length}/${WebSocketSettings.playerListA.length})`;
                     if (WebSocketSettings.host) {
-                        if (WebSocketSettings.playerListA.length >= WebSocketSettings.playerListRoom.length) {
+                        if (WebSocketSettings.playerListA.length <= WebSocketSettings.playerListRoom.length) {
                             _ws.send(JSON.stringify({"toH":WebSocketSettings.toGameRoomKey, "type":"startGame"}));
                             ws_startGame();
                         }
@@ -90,17 +93,20 @@ function websocketStart() {
                     if (data.list.length < WebSocketSettings.playerListA.length) {
                         // 自分がホスト
                         WebSocketSettings.host = true;
+                        WebSocketSettings.connected = true;
                         _ws.send(JSON.stringify({"to": data.FROM, "type": "matchingMyHost", "list": WebSocketSettings.playerListA, "myRoomKey": WebSocketSettings.mRoomKey}));
                         WebSocketSettings.roomHost = WebSocketSettings.userId;
                     } else {
                         // お前がホスト
                         WebSocketSettings.host = false;
+                        WebSocketSettings.connected = true;
                         _ws.send(JSON.stringify({"to": data.FROM, "type": "matchingYourHost", "list": WebSocketSettings.playerListA, "roomKey": data.myRoomKey}));
                         statusMessage.string = `ほかのプレイヤーの参加を待っています... (${WebSocketSettings.playerListA.length}/${WebSocketSettings.playerMax})`;
                         WebSocketSettings.roomHost = data.FROM;
                     }
                 }
                 if (data.type == "matchingYourHost") {
+                    WebSocketSettings.connected = true;
                     WebSocketSettings.playerListA = Array.from(new Set(WebSocketSettings.playerListA.concat(data.list)));
                     statusMessage.string = `ほかのプレイヤーの参加を待っています... (${WebSocketSettings.playerListA.length}/${WebSocketSettings.playerMax})`;
                     for (const playerListKey in WebSocketSettings.playerListA) {
@@ -108,25 +114,7 @@ function websocketStart() {
                         _ws.send(JSON.stringify({"to": WebSocketSettings.playerListA[playerListKey], "type": "matchingPlayerList", "list": WebSocketSettings.playerListA, "roomKey": WebSocketSettings.mRoomKey}));
                     }
                     if (WebSocketSettings.playerListA.length >= WebSocketSettings.playerMax) {
-                        let waitTime = 10;
-                        _wsTimer = setInterval(() => {
-                            if (0 > waitTime) {
-                                clearInterval(_wsTimer);
-                                ws_goRoom();
-                                return;
-                            }
-                            for (const playerListKey in WebSocketSettings.playerListA) {
-                                if (WebSocketSettings.playerListA[playerListKey] == WebSocketSettings.userId) continue;
-                                _ws.send(JSON.stringify({
-                                    "to": WebSocketSettings.playerListA[playerListKey],
-                                    "type": "matchingTimer",
-                                    "waitTime": waitTime,
-                                    "roomKey": WebSocketSettings.mRoomKey
-                                }));
-                            }
-                            statusMessage.string = `まもなく始まります... (${waitTime})`;
-                            waitTime--;
-                        }, 1000);
+                        startCount();
                     }
                 }
                 if (data.type == "matchingPlayerList") {
@@ -220,6 +208,28 @@ function websocketStart() {
     };
 };
 
+function startCount () {
+    WebSocketSettings.started = true;
+    let waitTime = 10;
+    _wsTimer = setInterval(() => {
+        if (0 > waitTime) {
+            clearInterval(_wsTimer);
+            ws_goRoom();
+            return;
+        }
+        for (const playerListKey in WebSocketSettings.playerListA) {
+            if (WebSocketSettings.playerListA[playerListKey] == WebSocketSettings.userId) continue;
+            _ws.send(JSON.stringify({
+                "to": WebSocketSettings.playerListA[playerListKey],
+                "type": "matchingTimer",
+                "waitTime": waitTime,
+                "roomKey": WebSocketSettings.mRoomKey
+            }));
+        }
+        statusMessage.string = `まもなく始まります... (${waitTime})`;
+        waitTime--;
+    }, 1000);
+}
 function ws_startGame () {
     for (let i = 0; i < WebSocketSettings.playerMax; i++) {
         if (WebSocketSettings.playerListA[i]) {

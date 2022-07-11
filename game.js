@@ -27,6 +27,7 @@ let showMessage = {
     string: "",
     show: false
 }
+let roomKeySetIs = false;
 
 let playerColor = { // プレイヤー一覧
     1: [0, 0, 0],
@@ -118,53 +119,98 @@ window.addEventListener("load", function(){
     // 初期設定
     getSize();
     init();
-    websocketStart();
 });
 
 /*
  キャンバスクリック時の動作
  */
-function canvasMouseClick (cpu = false, panel = null)
+function canvasMouseClick (e, cpu = false, panel = null)
 {
-    if (!startNow) return;
-    if (_clicked) return;
-    _clicked = true;
-    clearInterval(clicked_interval);
-    _clicked = true;
     let _panel = panel?panel:nowPanel;
-    clicked_interval = setInterval(() => _clicked = false, 1000);
-    if (_panel[0] == null || _panel[1] == null) {
+    if (startNow) {
+        if (_panel[0] == null || _panel[1] == null) {
+            _clicked = false;
+            return;
+        }
+        if (!cpu) {
+            if (_clicked) return;
+            _clicked = true;
+            clearInterval(clicked_interval);
+            _clicked = true;
+            clicked_interval = setInterval(() => _clicked = false, 1000);
+            if (nowNumber !== myNumber) return;
+            _clicked = true;
+        }
+        if (zeroIs) {
+            if (!zeroCanPoint[_panel[0]][_panel[1]]) {
+                _clicked = false;
+                return;
+            }
+        } else {
+            if (!canPoint[_panel[0]][_panel[1]]) {
+                _clicked = false;
+                return;
+            }
+        }
+        if (WebSocketSettings.host) {
+            zeroIs = false;
+            nowPiece[_panel[0]][_panel[1]] = nowNumber;
+            setOthelloTurn(_panel[0], _panel[1]);
+            nextPlayer();
+        } else {
+            _ws.send(JSON.stringify({
+                "to": WebSocketSettings.roomHost,
+                "type": "setOthello",
+                "roomKey": WebSocketSettings.toGameRoomKey,
+                "panel": _panel
+            }));
+        }
+    } else {
+        _clicked = true;
+        console.log(_panel)
+        if (_panel[0] == null || _panel[1] == null) {
+            _clicked = false;
+            return;
+        }
+        if (_panel[0] == 2 && _panel[1] == 4) roomKeyUpDown(0, true);
+        if (_panel[0] == 2 && _panel[1] == 6) roomKeyUpDown(0, false);
+        if (_panel[0] == 3 && _panel[1] == 4) roomKeyUpDown(1, true);
+        if (_panel[0] == 3 && _panel[1] == 6) roomKeyUpDown(1, false);
+        if (_panel[0] == 4 && _panel[1] == 4) roomKeyUpDown(2, true);
+        if (_panel[0] == 4 && _panel[1] == 6) roomKeyUpDown(2, false);
+        if (_panel[0] == 5 && _panel[1] == 4) roomKeyUpDown(3, true);
+        if (_panel[0] == 5 && _panel[1] == 6) roomKeyUpDown(3, false);
+        if (_panel[0] == 6 && _panel[1] == 5) websocketStart();
+        if ((_panel[0] == 3 && _panel[1] == 5) || (_panel[0] == 4 && _panel[1] == 5)) {
+            if (WebSocketSettings.connected && WebSocketSettings.playerListA.length > 1 && !WebSocketSettings.started) {
+                WebSocketSettings.started = true;
+                if (WebSocketSettings.playerListA.length < 3) WebSocketSettings.playerMax = 2;
+                startCount();
+            }
+        }
         _clicked = false;
-        return;
-    }
-    if ((nowNumber !== myNumber) || !cpu) return;
-    _clicked = true;
-    if (zeroIs) {
-        if (!zeroCanPoint[_panel[0]][_panel[1]]) {
-            _clicked = false;
-            return;
-        }
-    } else {
-        if (!canPoint[_panel[0]][_panel[1]]) {
-            _clicked = false;
-            return;
-        }
-    }
-    if (WebSocketSettings.host) {
-        zeroIs = false;
-        nowPiece[_panel[0]][_panel[1]] = nowNumber;
-        setOthelloTurn(_panel[0], _panel[1]);
-        nextPlayer();
-    } else {
-        _ws.send(JSON.stringify({
-            "to": WebSocketSettings.roomHost,
-            "type": "setOthello",
-            "roomKey": WebSocketSettings.toGameRoomKey,
-            "panel": _panel
-        }));
     }
 }
 
+/*
+ ルームキーの操作内部
+ */
+function roomKeyUpDown (l, up) {
+    let roomKeySplit = WebSocketSettings.roomKey.split("");
+    let lInt = Number(roomKeySplit[l]);
+    if (up) {
+        lInt++;
+    } else {
+        lInt--;
+    }
+    if (lInt > 9) {
+        lInt = 9;
+    } else if (lInt < 0) {
+        lInt = 0;
+    }
+    roomKeySplit[l] = String(lInt);
+    WebSocketSettings.roomKey = roomKeySplit.join("");
+}
 /*
  誰のターンかどうかのメッセージ
  */
@@ -179,6 +225,7 @@ function showPlayerMessage () {
     setTimeout(()=>{
         showMessage.show = false;
         _clicked = false;
+        if (playerList[nowNumber].cpu) cpGo();
     }, 2000);
 }
 
@@ -198,6 +245,7 @@ function nextPlayer () {
             if (canPoint[canPointKey][canPointKeyAs]) canPointCount++;
         }
     }
+    console.log(playerList[nowNumber]);
     if (canPointCount === 0) {
         let nowPieceCount = 0;
         let nowPieceNullCount = 0;
@@ -224,14 +272,11 @@ function nextPlayer () {
                     }
                 }
             }
-            if (playerList[nowNumber].cpu) cpGo();
         } else {
             // スキップ
             nextPlayer();
             return;
         }
-    } else {
-        if (playerList[nowNumber].cpu) cpGo();
     }
     if (WebSocketSettings.host) {
         _ws.send(JSON.stringify({
@@ -251,7 +296,6 @@ function nextPlayer () {
  キャンバス上でのマウスカーソル移動時の処理
  */
 function canvasMouseMove(e) {
-    if (!startNow) return;
     let rect = e.target.getBoundingClientRect()
     let _nowPanel = othelloXY(e.clientX - rect.left, e.clientY - rect.top);
     if (_nowPanel[0] >= 0 && _nowPanel[1] >= 0 && _nowPanel[0] < boardLength && _nowPanel[1] < boardLength) {
@@ -582,7 +626,7 @@ function drawOthelloCanvas () {
                 playerListPieceCount[nowPiece[nowPieceKey][nowPieceKeyAs]]++;
             }
         }
-        g.fillText(`参加人数: ${playerList[3] ? 4 : 2}人 | ${playerList[nowNumber].name}の数: ${playerListPieceCount[nowNumber]} | あなたは ${playerColorString[myNumber]}`, boardPoint[0], boardEndPoint[1] + sizeWH / 200);
+        g.fillText(`参加人数: ${WebSocketSettings.playerListA.length}人 | ${playerList[nowNumber].name}の数: ${playerListPieceCount[nowNumber]} | あなたは ${playerColorString[myNumber]}`, boardPoint[0], boardEndPoint[1] + sizeWH / 200);
     } else {
         // タイトル画面
         showTitleScreen();
@@ -628,13 +672,104 @@ function showTitleScreen () {
     for (let i = 0; i < titleB.length; i++) {
         g.fillText(titleB[i], boardPoint[0] + ((i+4) * boardOneSize) + (boardLine*(i+3)) + (boardOneSize/8), boardPoint[1] + (2 * boardOneSize) + (boardLine*1) + (boardOneSize/5));
     }
-    // マッチング番号
-    let tRoomNumber = WebSocketSettings.roomKey.split("");
-    for (let i = 0; i < tRoomNumber.length; i++) {
-        g.fillText(tRoomNumber[i], boardPoint[0] + ((i+2) * boardOneSize) + (boardLine*i+1) + (boardOneSize/3.5), boardPoint[1] + (5 * boardOneSize) + (boardLine*4) + (boardOneSize/5));
+    // マッチング背景
+    g.beginPath();
+    g.fillStyle = "rgba(0, 0, 0, 0.7)";
+    g.fillRect(boardPoint[0] + (sizeWH / 30), boardPoint[1] + (sizeWH / 2.6), (boardEndPoint[0] - boardPoint[0]) - ((sizeWH / 30) * 2), ((sizeWH / 2.3)));
+    if (roomKeySetIs) {
+        // マッチング設定
+        g.beginPath();
+        g.font = `${sizeWH / 30}pt Arial`;
+        g.fillStyle = `rgba(255, 255, 255)`;
+        g.fillText("ゲーム設定", boardPoint[0] + (boardOneSize), boardPoint[1] + (3.5 * boardOneSize) + (boardLine * 2) + (boardOneSize / 5));
+        if (WebSocketSettings.host) {
+            if (WebSocketSettings.connected) {
+                if (!WebSocketSettings.started) {
+                    // スタートボタン
+                    g.beginPath();
+                    g.fillStyle = "rgba(255, 255, 255)";
+                    g.fillRect(boardPoint[0] + ((2 + 1) * boardOneSize) + (boardLine * (3)), boardPoint[1] + ((4 + 1) * boardOneSize) + (boardLine * 5), (boardOneSize * 2) + boardLine, boardOneSize);
+                    // スタートボタン文字
+                    g.beginPath();
+                    g.font = `${sizeWH / 25}pt Arial`;
+                    g.fillStyle = `rgba(0, 0, 0)`;
+                    g.textAlign = "center";
+                    g.textBaseline = "middle";
+                    g.fillText("スタート", boardPoint[0] + (4 * boardOneSize) + (boardLine * 4), boardPoint[1] + (5.5 * boardOneSize) + (boardLine * 6));
+                }
+                // 文字
+                g.beginPath();
+                g.font = `${sizeWH / 30}pt Arial`;
+                g.fillStyle = `rgba(255, 255, 255)`;
+                g.textAlign = "center";
+                g.textBaseline = "middle";
+                g.fillText("あなたがホストです", boardPoint[0] + ((boardEndPoint[0] - boardPoint[0]) / 2), boardPoint[1] + (7 * boardOneSize));
+            } else {
+                g.beginPath();
+                g.font = `${sizeWH / 30}pt Arial`;
+                g.fillStyle = `rgba(255, 255, 255)`;
+                g.textAlign = "center";
+                g.textBaseline = "middle";
+                g.fillText("プレイヤーを待っています", boardPoint[0]+((boardEndPoint[0]-boardPoint[0])/2), boardPoint[1] + (5.5 * boardOneSize) + (boardLine * 6));
+            }
+        } else {
+            g.beginPath();
+            g.font = `${sizeWH / 30}pt Arial`;
+            g.fillStyle = `rgba(255, 255, 255)`;
+            g.textAlign = "center";
+            g.textBaseline = "middle";
+            g.fillText("ホストがゲームを開始するまで", boardPoint[0]+((boardEndPoint[0]-boardPoint[0])/2), boardPoint[1] + (5.5 * boardOneSize) + (boardLine));
+            g.fillText("お待ちください", boardPoint[0]+((boardEndPoint[0]-boardPoint[0])/2), boardPoint[1] + (6 * boardOneSize) + (boardLine));
+        }
+    } else {
+        // マッチング番号
+        g.beginPath();
+        g.font = `${sizeWH / 30}pt Arial`;
+        g.fillStyle = `rgba(255, 255, 255)`;
+        g.fillText("ルーム番号設定", boardPoint[0] + (boardOneSize), boardPoint[1] + (3.5 * boardOneSize) + (boardLine * 2) + (boardOneSize / 5));
+        g.textAlign = "left";
+        g.textBaseline = "top";
+        g.font = `${sizeWH / 15}pt Arial`;
+        let tRoomNumber = WebSocketSettings.roomKey.split("");
+        for (let i = 0; i < tRoomNumber.length; i++) {
+            g.fillText(tRoomNumber[i], boardPoint[0] + ((i + 2) * boardOneSize) + (boardLine * i + 1) + (boardOneSize / 3.5), boardPoint[1] + (5 * boardOneSize) + (boardLine * 4) + (boardOneSize / 5));
+        }
+        // マッチング番号操作盤
+        for (let i = 0; i < tRoomNumber.length; i++) {
+            roomNumberSetCanvas(i, 4, true);
+        }
+        for (let i = 0; i < tRoomNumber.length; i++) {
+            roomNumberSetCanvas(i, 6, false);
+        }
+        // Goボタン
+        g.beginPath();
+        gContextSetPiece([boardPoint[0] + (7 * boardOneSize) + (boardLine * 6) - (boardOneSize / 2), boardPoint[1] + (6 * boardOneSize) + (boardLine * 5) - (boardOneSize / 2), boardOneSize / 2.3]);
+        g.fillStyle = "rgba(255,255,255)";
+        g.fill();
+        g.beginPath();
+        g.font = `${sizeWH / 20}pt Arial`;
+        g.fillStyle = `rgba(0, 0, 0)`;
+        g.textAlign = "center";
+        g.textBaseline = "top";
+        g.fillText("Go", boardPoint[0] + (6 * boardOneSize) + (boardLine * 5) + (boardOneSize / 1.9), boardPoint[1] + (5 * boardOneSize) + (boardLine * 5) + (boardOneSize / 5));
     }
 }
 
+/*
+ 操作盤用
+ */
+function roomNumberSetCanvas (i, i2, up = true) {
+    g.beginPath();
+    gContextSetPiece([boardPoint[0] + ((i+3) * boardOneSize) + (boardLine*(i+2)) - (boardOneSize/2), boardPoint[1] + ((i2+1) * boardOneSize) + (boardLine*i2) - (boardOneSize/2), boardOneSize/2.3]);
+    g.fillStyle = "rgba(255,255,255)";
+    g.fill();
+    g.beginPath();
+    g.font = `${sizeWH / 20}pt Arial`;
+    g.fillStyle = `rgba(0,0,0)`;
+    g.textAlign = "center";
+    g.textBaseline = "top";
+    g.fillText(up?"↑":"↓", boardPoint[0] + ((i+2) * boardOneSize) + (boardLine*(i+1)) + (boardOneSize/1.9), boardPoint[1] + ((i2) * boardOneSize) + (boardLine*(i2-1)) + (boardOneSize/5));
+}
 /*
  ピースを描写する
  */
@@ -655,7 +790,8 @@ function cpGo () {
         }
     }
     let selectPoint = canPointFilter[Math.floor(Math.random() * canPointFilter.length)];
-    canvasMouseClick(true, selectPoint);
+    console.log(selectPoint);
+    canvasMouseClick(null,true, selectPoint);
 }
 
 /*
