@@ -257,7 +257,7 @@ function nextPlayer () {
         }
         console.log(`${nowPieceCount} ${nowPieceNullCount}`)
         if (nowPieceNullCount === 0) {
-            console.log("終わり");
+            WebSocketSettings.isFinish = true;
             nowNumber = 5;
         } else if (nowPieceCount === 0) {
             // 一つもピースがなくなった場合
@@ -292,6 +292,41 @@ function nextPlayer () {
         showPlayerMessage();
     }
 }
+
+/*
+ 終わった時の動作
+ */
+function gameFinish () {
+    // 背景
+    g.beginPath();
+    g.fillStyle = "rgba(0, 0, 0, 0.7)";
+    g.fillRect(boardPoint[0] + (sizeWH / 30), boardPoint[1] + (sizeWH / 30), (boardEndPoint[0] - boardPoint[0]) - ((sizeWH / 30)*2), (boardEndPoint[1] - boardPoint[1]) - ((sizeWH / 30)*2));
+    // 結果画面（テキスト）
+    g.beginPath();
+    g.font = `${sizeWH / 20}pt Arial`;
+    g.fillStyle = `rgba(255, 255, 255)`;
+    g.textAlign = "center";
+    g.textBaseline = "middle";
+    g.fillText("ゲーム結果", boardPoint[0]+((boardEndPoint[0]-boardPoint[0])/2), boardPoint[1] + (1.5 * boardOneSize));
+    // ピース数カウント
+    let playerPiece = {1:0,2:0,3:0,4:0};
+    for (let i = 0; i < boardLength; i++) {
+        for (let i2 = 0; i2 < boardLength; i2++) {
+            if (nowPiece[i][i2] == null) continue;
+            playerPiece[nowPiece[i][i2]]++;
+        }
+    }
+    let pieceArray = Object.keys(playerPiece).map((k)=>({ key: k, value: playerPiece[k] }));
+    pieceArray.sort((a, b) => a.value - b.value);
+    g.font = `${sizeWH / 30}pt Arial`;
+    g.fillText(`1位: ${playerColorString[pieceArray[0].key]} => ${pieceArray[0].value}個`, boardPoint[0]+((boardEndPoint[0]-boardPoint[0])/2), boardPoint[1] + (3.5 * boardOneSize));
+    g.fillText(`2位: ${playerColorString[pieceArray[1].key]} => ${pieceArray[1].value}個`, boardPoint[0]+((boardEndPoint[0]-boardPoint[0])/2), boardPoint[1] + (4.5 * boardOneSize));
+    g.fillText(`3位: ${playerColorString[pieceArray[2].key]} => ${pieceArray[2].value}個`, boardPoint[0]+((boardEndPoint[0]-boardPoint[0])/2), boardPoint[1] + (5.5 * boardOneSize));
+    g.fillText(`4位: ${playerColorString[pieceArray[3].key]} => ${pieceArray[3].value}個`, boardPoint[0]+((boardEndPoint[0]-boardPoint[0])/2), boardPoint[1] + (6.5 * boardOneSize));
+
+}
+
+
 /*
  キャンバス上でのマウスカーソル移動時の処理
  */
@@ -627,6 +662,8 @@ function drawOthelloCanvas () {
             }
         }
         g.fillText(`参加人数: ${WebSocketSettings.playerListA.length}人 | ${playerList[nowNumber].name}の数: ${playerListPieceCount[nowNumber]} | あなたは ${playerColorString[myNumber]}`, boardPoint[0], boardEndPoint[1] + sizeWH / 200);
+    } else if (WebSocketSettings.isFinish) {
+        gameFinish();
     } else {
         // タイトル画面
         showTitleScreen();

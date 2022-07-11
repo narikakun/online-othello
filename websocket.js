@@ -15,7 +15,8 @@ let WebSocketSettings = {
     playerMax: 4,
     playerListRoom: [],
     connected: false,
-    started: false
+    started: false,
+    isFinish: false
 }
 
 let _wsTimer = null;
@@ -161,6 +162,7 @@ function websocketStart() {
                     startNow = false;
                     statusMessage.string = "相手が切断したため終了しました。";
                     statusMessage.color = [255, 0, 0];
+                    WebSocketSettings.isFinish = true;
                     return;
                 } else {
                     if (WebSocketSettings.host) {
