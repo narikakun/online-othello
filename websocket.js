@@ -154,6 +154,9 @@ function websocketStart() {
                     setOthelloTurn(data.panel[0], data.panel[1]);
                     nextPlayer();
                 }
+                if (data.type == "finish") {
+                    WebSocketSettings.isFinish = true;
+                }
             }
             if (data.leftHub) {
                 if (WebSocketSettings.toGameRoomKey) {
@@ -171,6 +174,7 @@ function websocketStart() {
                         if (_wsTimer) {
                             clearInterval(_wsTimer);
                         }
+                        WebSocketSettings.started = false;
                         statusMessage.string = `ほかのプレイヤーの参加を待っています... (${WebSocketSettings.playerListA.length + 1}/${WebSocketSettings.playerMax})`;
                         for (const playerListKey in WebSocketSettings.playerListA) {
                             _ws.send(JSON.stringify({

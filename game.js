@@ -25,7 +25,8 @@ let _clicked = false; // 連続クリック対策
 let showMessage = {
     color: [255, 255, 255],
     string: "",
-    show: false
+    show: false,
+    timer: null
 }
 let roomKeySetIs = false;
 
@@ -222,13 +223,15 @@ function showPlayerMessage () {
     }
     showMessage.show = true;
     _clicked = true;
-    setTimeout(()=>{
+    clearTimeout(showMessage.timer);
+    showMessage.timer = setTimeout(()=>{
         showMessage.show = false;
         _clicked = false;
         if (playerList[nowNumber].cpu) cpGo();
     }, 2000);
 }
 
+let loopCount = 0;
 /*
  次のプレイヤーに回す
  */
@@ -245,7 +248,6 @@ function nextPlayer () {
             if (canPoint[canPointKey][canPointKeyAs]) canPointCount++;
         }
     }
-    console.log(playerList[nowNumber]);
     if (canPointCount === 0) {
         let nowPieceCount = 0;
         let nowPieceNullCount = 0;
@@ -255,7 +257,6 @@ function nextPlayer () {
                 if (nowPiece[i][i2] == null) nowPieceNullCount++;
             }
         }
-        console.log(`${nowPieceCount} ${nowPieceNullCount}`)
         if (nowPieceNullCount === 0) {
             WebSocketSettings.isFinish = true;
             nowNumber = 5;
@@ -273,7 +274,17 @@ function nextPlayer () {
                 }
             }
         } else {
+            if (loopCount > 5) {
+                WebSocketSettings.isFinish = true;
+                _ws.send(JSON.stringify({
+                    "toH": WebSocketSettings.toGameRoomKey,
+                    "type": "finish",
+                    "roomKey": WebSocketSettings.toGameRoomKey
+                }));
+                return;
+            }
             // スキップ
+            loopCount++;
             nextPlayer();
             return;
         }
@@ -317,7 +328,7 @@ function gameFinish () {
         }
     }
     let pieceArray = Object.keys(playerPiece).map((k)=>({ key: k, value: playerPiece[k] }));
-    pieceArray.sort((a, b) => a.value - b.value);
+    pieceArray.sort((a, b) => b.value - a.value);
     g.font = `${sizeWH / 30}pt Arial`;
     g.fillText(`1位: ${playerColorString[pieceArray[0].key]} => ${pieceArray[0].value}個`, boardPoint[0]+((boardEndPoint[0]-boardPoint[0])/2), boardPoint[1] + (3.5 * boardOneSize));
     g.fillText(`2位: ${playerColorString[pieceArray[1].key]} => ${pieceArray[1].value}個`, boardPoint[0]+((boardEndPoint[0]-boardPoint[0])/2), boardPoint[1] + (4.5 * boardOneSize));
@@ -642,7 +653,9 @@ function drawOthelloCanvas () {
         }
         nowX++;
     }
-    if (startNow) {
+    if (WebSocketSettings.isFinish) {
+        gameFinish();
+    } else if (startNow) {
         // ボードの下に文字を書く
         g.beginPath();
         g.font = `${sizeWH / 50}pt Arial`;
@@ -662,8 +675,6 @@ function drawOthelloCanvas () {
             }
         }
         g.fillText(`参加人数: ${WebSocketSettings.playerListA.length}人 | ${playerList[nowNumber].name}の数: ${playerListPieceCount[nowNumber]} | あなたは ${playerColorString[myNumber]}`, boardPoint[0], boardEndPoint[1] + sizeWH / 200);
-    } else if (WebSocketSettings.isFinish) {
-        gameFinish();
     } else {
         // タイトル画面
         showTitleScreen();
