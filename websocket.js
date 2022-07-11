@@ -31,7 +31,7 @@ function websocketStart() {
     statusMessage.string = "サーバーに接続中です...";
     _ws = new WebSocket(WebSocketSettings.ws.url);
     //接続通知
-    _ws.onopen = function(event) {
+    _ws.onopen = function() {
         WebSocketSettings.closed = false;
         statusMessage.color = [255, 255, 255];
         statusMessage.string = "サーバーに接続しました...ログインしています...";
@@ -41,7 +41,7 @@ function websocketStart() {
             console.log(event.data);
             let data = JSON.parse(event.data);
             if (data.auth) {
-                if (data.auth == "OK") {
+                if (data.auth === "OK") {
                     statusMessage.color = [255, 255, 255];
                     statusMessage.string = "ログインしました。ルームに参加中です...";
                     _ws.send(JSON.stringify({"joinHub": WebSocketSettings.toGameRoomKey||WebSocketSettings.roomKey}))
@@ -52,7 +52,7 @@ function websocketStart() {
                 }
             }
             if (data.joinHub) {
-                if (data.joinHub == "OK") {
+                if (data.joinHub === "OK") {
                     if (WebSocketSettings.toGameRoomKey) {
                         statusMessage.color = [255, 255, 255];
                         WebSocketSettings.playerListRoom = [];
@@ -72,7 +72,7 @@ function websocketStart() {
                 }
             }
             if (data.type) {
-                if (data.type == "joinedCheck") {
+                if (data.type === "joinedCheck") {
                     statusMessage.color = [255, 255, 255];
                     WebSocketSettings.playerListRoom.push(data.FROM);
                     statusMessage.string = `ルームに参加しました。他のプレイヤーを待っています... (${WebSocketSettings.playerListRoom.length}/${WebSocketSettings.playerListA.length})`;
@@ -83,14 +83,14 @@ function websocketStart() {
                         }
                     }
                 }
-                if (data.type == "startGame") {
+                if (data.type === "startGame") {
                     ws_startGame();
                 }
-                if (data.type == "matchingPlease") {
+                if (data.type === "matchingPlease") {
                     if (!WebSocketSettings.host || WebSocketSettings.playerListA.length >= WebSocketSettings.playerMax) return;
                     _ws.send(JSON.stringify({"to":data.FROM, "type":"matchingOK", "list":WebSocketSettings.playerListA, "myRoomKey": WebSocketSettings.mRoomKey}));
                 }
-                if (data.type == "matchingOK") {
+                if (data.type === "matchingOK") {
                     if (data.list.length < WebSocketSettings.playerListA.length) {
                         // 自分がホスト
                         WebSocketSettings.host = true;
@@ -106,19 +106,19 @@ function websocketStart() {
                         WebSocketSettings.roomHost = data.FROM;
                     }
                 }
-                if (data.type == "matchingYourHost") {
+                if (data.type === "matchingYourHost") {
                     WebSocketSettings.connected = true;
                     WebSocketSettings.playerListA = Array.from(new Set(WebSocketSettings.playerListA.concat(data.list)));
                     statusMessage.string = `ほかのプレイヤーの参加を待っています... (${WebSocketSettings.playerListA.length}/${WebSocketSettings.playerMax})`;
                     for (const playerListKey in WebSocketSettings.playerListA) {
-                        if (WebSocketSettings.playerListA[playerListKey] == WebSocketSettings.userId) continue;
+                        if (WebSocketSettings.playerListA[playerListKey] === WebSocketSettings.userId) continue;
                         _ws.send(JSON.stringify({"to": WebSocketSettings.playerListA[playerListKey], "type": "matchingPlayerList", "list": WebSocketSettings.playerListA, "roomKey": WebSocketSettings.mRoomKey}));
                     }
                     if (WebSocketSettings.playerListA.length >= WebSocketSettings.playerMax) {
                         startCount();
                     }
                 }
-                if (data.type == "matchingPlayerList") {
+                if (data.type === "matchingPlayerList") {
                     WebSocketSettings.playerListA = data.list;
                     if (WebSocketSettings.playerListA.length >= WebSocketSettings.playerMax) {
                         statusMessage.string = `もうしばらくお待ちください... (${WebSocketSettings.playerListA.length}/${WebSocketSettings.playerMax})`;
@@ -126,19 +126,19 @@ function websocketStart() {
                         statusMessage.string = `ほかのプレイヤーの参加を待っています... (${WebSocketSettings.playerListA.length}/${WebSocketSettings.playerMax})`;
                     }
                 }
-                if (data.type == "matchingTimer") {
+                if (data.type === "matchingTimer") {
                     statusMessage.string = `まもなく始まります... (${data.waitTime})`;
                 }
 
-                if (data.type == "ping") {
+                if (data.type === "ping") {
                     WebSocketSettings.last_ping = new Date();
                 }
 
-                if (data.type == "goRoomA") {
+                if (data.type === "goRoomA") {
                     WebSocketSettings.mRoomKey = data.roomKey;
                     ws_goRoom();
                 }
-                if (data.type == "nextPlayerRefresh") {
+                if (data.type === "nextPlayerRefresh") {
                     if (data.FROM !== WebSocketSettings.roomHost) return;
                     nowPiece = data.nowPiece;
                     nowNumber = data.nowNumber;
@@ -148,13 +148,13 @@ function websocketStart() {
                     _clicked = false;
                     showPlayerMessage();
                 }
-                if (data.type == "setOthello") {
+                if (data.type === "setOthello") {
                     zeroIs = false;
                     nowPiece[data.panel[0]][data.panel[1]] = nowNumber;
                     setOthelloTurn(data.panel[0], data.panel[1]);
                     nextPlayer();
                 }
-                if (data.type == "finish") {
+                if (data.type === "finish") {
                     WebSocketSettings.isFinish = true;
                 }
             }
@@ -166,7 +166,6 @@ function websocketStart() {
                     statusMessage.string = "相手が切断したため終了しました。";
                     statusMessage.color = [255, 0, 0];
                     WebSocketSettings.isFinish = true;
-                    return;
                 } else {
                     if (WebSocketSettings.host) {
                         if (!WebSocketSettings.playerListA.includes(data.user)) return;
@@ -185,16 +184,12 @@ function websocketStart() {
                             }));
                         }
                     } else {
-                        if (WebSocketSettings.roomHost == data.user) {
+                        if (WebSocketSettings.roomHost === data.user) {
                             statusMessage.string = "ホストユーザーが抜けたため切断しました。";
                             statusMessage.color = [255, 0, 0];
-                            return;
                         }
                     }
                 }
-            }
-            if (data.error) {
-                return;
             }
         };
 
@@ -212,7 +207,7 @@ function websocketStart() {
         statusMessage.string = "エラーが発生しました。";
         statusMessage.color = [255, 0, 0];
     };
-};
+}
 
 function startCount () {
     WebSocketSettings.started = true;
@@ -224,7 +219,7 @@ function startCount () {
             return;
         }
         for (const playerListKey in WebSocketSettings.playerListA) {
-            if (WebSocketSettings.playerListA[playerListKey] == WebSocketSettings.userId) continue;
+            if (WebSocketSettings.playerListA[playerListKey] === WebSocketSettings.userId) continue;
             _ws.send(JSON.stringify({
                 "to": WebSocketSettings.playerListA[playerListKey],
                 "type": "matchingTimer",
@@ -244,7 +239,7 @@ function ws_startGame () {
                 name: playerColorString[i+1],
                 cpu: false
             }
-            if (WebSocketSettings.userId == WebSocketSettings.playerListA[i]) myNumber = i+1;
+            if (WebSocketSettings.userId === WebSocketSettings.playerListA[i]) myNumber = i+1;
         } else {
             playerList[i+1] = {
                 id: `CPU${i+1}`,
@@ -263,7 +258,7 @@ function ws_startGame () {
 function ws_goRoom () {
     if (WebSocketSettings.host) {
         for (const playerListKey in WebSocketSettings.playerListA) {
-            if (WebSocketSettings.playerListA[playerListKey] == WebSocketSettings.userId) continue;
+            if (WebSocketSettings.playerListA[playerListKey] === WebSocketSettings.userId) continue;
             _ws.send(JSON.stringify({
                 "to": WebSocketSettings.playerListA[playerListKey],
                 "type": "goRoomA",

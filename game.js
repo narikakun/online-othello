@@ -173,16 +173,16 @@ function canvasMouseClick (e, cpu = false, panel = null)
             _clicked = false;
             return;
         }
-        if (_panel[0] == 2 && _panel[1] == 4) roomKeyUpDown(0, true);
-        if (_panel[0] == 2 && _panel[1] == 6) roomKeyUpDown(0, false);
-        if (_panel[0] == 3 && _panel[1] == 4) roomKeyUpDown(1, true);
-        if (_panel[0] == 3 && _panel[1] == 6) roomKeyUpDown(1, false);
-        if (_panel[0] == 4 && _panel[1] == 4) roomKeyUpDown(2, true);
-        if (_panel[0] == 4 && _panel[1] == 6) roomKeyUpDown(2, false);
-        if (_panel[0] == 5 && _panel[1] == 4) roomKeyUpDown(3, true);
-        if (_panel[0] == 5 && _panel[1] == 6) roomKeyUpDown(3, false);
-        if (_panel[0] == 6 && _panel[1] == 5) websocketStart();
-        if ((_panel[0] == 3 && _panel[1] == 5) || (_panel[0] == 4 && _panel[1] == 5)) {
+        if (_panel[0] === 2 && _panel[1] === 4) roomKeyUpDown(0, true);
+        if (_panel[0] === 2 && _panel[1] === 6) roomKeyUpDown(0, false);
+        if (_panel[0] === 3 && _panel[1] === 4) roomKeyUpDown(1, true);
+        if (_panel[0] === 3 && _panel[1] === 6) roomKeyUpDown(1, false);
+        if (_panel[0] === 4 && _panel[1] === 4) roomKeyUpDown(2, true);
+        if (_panel[0] === 4 && _panel[1] === 6) roomKeyUpDown(2, false);
+        if (_panel[0] === 5 && _panel[1] === 4) roomKeyUpDown(3, true);
+        if (_panel[0] === 5 && _panel[1] === 6) roomKeyUpDown(3, false);
+        if (_panel[0] === 6 && _panel[1] === 5) websocketStart();
+        if ((_panel[0] === 3 && _panel[1] === 5) || (_panel[0] === 4 && _panel[1] === 5)) {
             if (WebSocketSettings.connected && WebSocketSettings.playerListA.length > 1 && !WebSocketSettings.started) {
                 WebSocketSettings.started = true;
                 if (WebSocketSettings.playerListA.length < 3) WebSocketSettings.playerMax = 2;
@@ -216,7 +216,7 @@ function roomKeyUpDown (l, up) {
  誰のターンかどうかのメッセージ
  */
 function showPlayerMessage () {
-    if (myNumber == nowNumber) {
+    if (myNumber === nowNumber) {
         showMessage.string = "あなたのターンです。";
     } else {
         showMessage.string = `${playerColorString[nowNumber]}のターンです。`;
@@ -714,11 +714,11 @@ function showTitleScreen () {
     g.textBaseline = "top";
     let titleA = "オセロ".split("");
     for (let i = 0; i < titleA.length; i++) {
-        g.fillText(titleA[i], boardPoint[0] + ((i+1) * boardOneSize) + (boardLine*i) + (boardOneSize/8), boardPoint[1] + (1 * boardOneSize) + (boardLine*0) + (boardOneSize/5));
+        g.fillText(titleA[i], boardPoint[0] + ((i+1) * boardOneSize) + (boardLine*i) + (boardOneSize/8), boardPoint[1] + boardOneSize + (boardOneSize/5));
     }
     let titleB = "ゲーム".split("");
     for (let i = 0; i < titleB.length; i++) {
-        g.fillText(titleB[i], boardPoint[0] + ((i+4) * boardOneSize) + (boardLine*(i+3)) + (boardOneSize/8), boardPoint[1] + (2 * boardOneSize) + (boardLine*1) + (boardOneSize/5));
+        g.fillText(titleB[i], boardPoint[0] + ((i+4) * boardOneSize) + (boardLine*(i+3)) + (boardOneSize/8), boardPoint[1] + (2 * boardOneSize) + boardLine + (boardOneSize/5));
     }
     // マッチング背景
     g.beginPath();
