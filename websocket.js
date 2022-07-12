@@ -6,7 +6,6 @@ let WebSocketSettings = {
     userId: String(Math.floor( Math.random() * (9999-1111) ) + 1111),
     userPwd: String(Math.floor( Math.random() * (9999-1111) ) + 1111),
     toGameRoomKey: null,
-    last_ping: null,
     host: true,
     playerListA: [],
     mRoomKey: String(Math.floor( Math.random() * (9999-1111) ) + 1111),
@@ -130,10 +129,6 @@ function websocketStart() {
                     statusMessage.string = `まもなく始まります... (${data.waitTime})`;
                 }
 
-                if (data.type === "ping") {
-                    WebSocketSettings.last_ping = new Date();
-                }
-
                 if (data.type === "goRoomA") {
                     WebSocketSettings.mRoomKey = data.roomKey;
                     ws_goRoom();
@@ -148,11 +143,33 @@ function websocketStart() {
                     _clicked = false;
                     showPlayerMessage();
                 }
+                if (data.type === "skipPlayer") {
+                    if (data.FROM !== WebSocketSettings.roomHost) return;
+                    nowPiece = data.nowPiece;
+                    nowNumber = data.nowNumber;
+                    zeroCanPoint = data.zeroCanPoint;
+                    canPoint = data.canPoint;
+                    zeroIs = data.zeroIs;
+                    statusMessage.string = `${playerColorString[data.nowNumber]}がスキップされます。`;
+                    showPlayerMessage("skip");
+                }
+                if (data.type === "dataRefresh") {
+                    if (data.FROM !== WebSocketSettings.roomHost) return;
+                    nowPiece = data.nowPiece;
+                    nowNumber = data.nowNumber;
+                    zeroCanPoint = data.zeroCanPoint;
+                    canPoint = data.canPoint;
+                    zeroIs = data.zeroIs;
+                }
                 if (data.type === "setOthello") {
+                    if (data.FROM !== playerList[nowNumber].id) return;
                     zeroIs = false;
                     nowPiece[data.panel[0]][data.panel[1]] = nowNumber;
                     setOthelloTurn(data.panel[0], data.panel[1]);
                     nextPlayer();
+                }
+                if (data.type === "setOthelloEvery") {
+                    statusMessage.string = `${playerColorString[data.setUser]}が設置しました。`;
                 }
                 if (data.type === "finish") {
                     WebSocketSettings.isFinish = true;
@@ -211,7 +228,7 @@ function websocketStart() {
 
 function startCount () {
     WebSocketSettings.started = true;
-    let waitTime = 10;
+    let waitTime = 5;
     _wsTimer = setInterval(() => {
         if (0 > waitTime) {
             clearInterval(_wsTimer);

@@ -49,6 +49,7 @@ let playerColorString = ["", "黒", "白", "赤", "青"]
 let myNumber = 99;
 let nowNumber = 99;
 
+let lastDraw = new Date().getTime();
 /*
  初期設定
  */
@@ -157,6 +158,13 @@ function canvasMouseClick (e, cpu = false, panel = null)
             zeroIs = false;
             nowPiece[_panel[0]][_panel[1]] = nowNumber;
             setOthelloTurn(_panel[0], _panel[1]);
+            statusMessage.string = `${playerColorString[nowNumber]}が設置しました。`;
+            _ws.send(JSON.stringify({
+                "toH": WebSocketSettings.toGameRoomKey,
+                "type": "setOthelloEvery",
+                "roomKey": WebSocketSettings.toGameRoomKey,
+                "setUser": nowNumber
+            }));
             nextPlayer();
         } else {
             _ws.send(JSON.stringify({
@@ -165,10 +173,16 @@ function canvasMouseClick (e, cpu = false, panel = null)
                 "roomKey": WebSocketSettings.toGameRoomKey,
                 "panel": _panel
             }));
+            statusMessage.string = `${playerColorString[nowNumber]}が設置しました。`;
+            _ws.send(JSON.stringify({
+                "toH": WebSocketSettings.toGameRoomKey,
+                "type": "setOthelloEvery",
+                "roomKey": WebSocketSettings.toGameRoomKey,
+                "setUser": nowNumber
+            }));
         }
     } else {
         _clicked = true;
-        console.log(_panel)
         if (_panel[0] == null || _panel[1] == null) {
             _clicked = false;
             return;
@@ -215,19 +229,36 @@ function roomKeyUpDown (l, up) {
 /*
  誰のターンかどうかのメッセージ
  */
-function showPlayerMessage () {
-    if (myNumber === nowNumber) {
-        showMessage.string = "あなたのターンです。";
-    } else {
-        showMessage.string = `${playerColorString[nowNumber]}のターンです。`;
+function showPlayerMessage (type = "next") {
+    if (!playerList[nowNumber]) return;
+    switch (type) {
+        case "next":
+            if (myNumber === nowNumber) {
+                showMessage.string = "あなたのターンです。";
+            } else {
+                showMessage.string = `${playerColorString[nowNumber]}のターンです。`;
+            }
+            break;
+        case "skip":
+            if (myNumber === nowNumber) {
+                showMessage.string = "あなたはスキップされます。";
+            } else {
+                showMessage.string = `${playerColorString[nowNumber]}がスキップです。`;
+            }
+            break;
     }
+    console.log(`${showMessage.string} | ${nowNumber}`)
     showMessage.show = true;
     _clicked = true;
     clearTimeout(showMessage.timer);
     showMessage.timer = setTimeout(()=>{
         showMessage.show = false;
         _clicked = false;
-        if (playerList[nowNumber].cpu) cpGo();
+        if (type === "skip") {
+            nextPlayer();
+        } else if (type === "next") {
+            if (playerList[nowNumber].cpu) cpGo();
+        }
     }, 2000);
 }
 
@@ -240,7 +271,7 @@ function nextPlayer () {
     if ((playerList[3]&&playerList[4])?nowNumber > 4:nowNumber > 2) {
         nowNumber = 1;
     }
-    _clicked = false;
+    _clicked = true;
     canPointSet();
     let canPointCount = 0;
     for (const canPointKey in canPoint) {
@@ -259,6 +290,11 @@ function nextPlayer () {
         }
         if (nowPieceNullCount === 0) {
             WebSocketSettings.isFinish = true;
+            _ws.send(JSON.stringify({
+                "toH": WebSocketSettings.toGameRoomKey,
+                "type": "finish",
+                "roomKey": WebSocketSettings.toGameRoomKey
+            }));
             nowNumber = 5;
         } else if (nowPieceCount === 0) {
             // 一つもピースがなくなった場合
@@ -285,7 +321,18 @@ function nextPlayer () {
             }
             // スキップ
             loopCount++;
-            nextPlayer();
+            statusMessage.string = `${playerColorString[nowNumber]}がスキップされます。`;
+            _ws.send(JSON.stringify({
+                "toH": WebSocketSettings.toGameRoomKey,
+                "type": "skipPlayer",
+                "roomKey": WebSocketSettings.toGameRoomKey,
+                "nowNumber": nowNumber,
+                "nowPiece": nowPiece,
+                "zeroCanPoint": zeroCanPoint,
+                "zeroIs": zeroIs,
+                "canPoint": canPoint
+            }));
+            showPlayerMessage("skip");
             return;
         }
     }
@@ -302,12 +349,14 @@ function nextPlayer () {
         }));
         showPlayerMessage();
     }
+    _clicked = false;
 }
 
 /*
  終わった時の動作
  */
 function gameFinish () {
+    statusMessage.string = `ゲームが終了しました。`;
     // 背景
     g.beginPath();
     g.fillStyle = "rgba(0, 0, 0, 0.7)";
@@ -674,18 +723,30 @@ function drawOthelloCanvas () {
                 playerListPieceCount[nowPiece[nowPieceKey][nowPieceKeyAs]]++;
             }
         }
-        g.fillText(`参加人数: ${WebSocketSettings.playerListA.length}人 | ${playerList[nowNumber].name}の数: ${playerListPieceCount[nowNumber]} | あなたは ${playerColorString[myNumber]}`, boardPoint[0], boardEndPoint[1] + sizeWH / 200);
+        if (playerList[nowNumber]) {
+            g.fillText(`参加人数: ${WebSocketSettings.playerListA.length}人 | ${playerList[nowNumber].name}の数: ${playerListPieceCount[nowNumber]} | あなたは ${playerColorString[myNumber]}`, boardPoint[0], boardEndPoint[1] + sizeWH / 200);
+        }
     } else {
         // タイトル画面
         showTitleScreen();
     }
+    // fps描写
+    let nowTimestamp = new Date().getTime();
+    let fps = (1000 / (nowTimestamp - lastDraw)).toPrecision(3);
+    lastDraw = nowTimestamp;
+    g.beginPath ();
+    g.font = `${sizeWH/50}pt Arial`;
+    g.fillStyle = `rgba(255,255,255)`;
+    g.textAlign = "right";
+    g.textBaseline = "bottom";
+    g.fillText(fps, boardEndPoint[0], boardPoint[1]-(sizeWH/50));
     // ボード上にメッセージを置く
     g.beginPath ();
     g.font = `${sizeWH/50}pt Arial`;
     g.fillStyle = `rgba(${statusMessage.color[0]}, ${statusMessage.color[1]}, ${statusMessage.color[2]})`;
     g.textAlign = "left";
     g.textBaseline = "bottom";
-    g.fillText(statusMessage.string + ` | ${new Date().getTime()} | ${_clicked}`, boardPoint[0], boardPoint[1]-(sizeWH/50));
+    g.fillText(statusMessage.string, boardPoint[0], boardPoint[1]-(sizeWH/50));
     // 画面中央メッセージの描写
     if (showMessage.show) {
         // メッセージ背景
@@ -838,7 +899,6 @@ function cpGo () {
         }
     }
     let selectPoint = canPointFilter[Math.floor(Math.random() * canPointFilter.length)];
-    console.log(selectPoint);
     canvasMouseClick(null,true, selectPoint);
 }
 
