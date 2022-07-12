@@ -165,6 +165,8 @@ function canvasMouseClick (e, cpu = false, panel = null)
                 "roomKey": WebSocketSettings.toGameRoomKey,
                 "setUser": nowNumber
             }));
+            clearInterval(_playerTimer);
+            playerTimerCount = 15;
             nextPlayer();
         } else {
             _ws.send(JSON.stringify({
@@ -258,8 +260,34 @@ function showPlayerMessage (type = "next") {
             nextPlayer();
         } else if (type === "next") {
             if (playerList[nowNumber].cpu) cpGo();
+            if (WebSocketSettings.host) playerTimer();
         }
     }, 2000);
+}
+
+/*
+ プレイヤーの時間制限
+ */
+let _playerTimer = null;
+let playerTimerCount = 15;
+function playerTimer () {
+    if (!startNow) return;
+    clearInterval(_playerTimer);
+    playerTimerCount = 15;
+    _playerTimer = setInterval(() => {
+        if (0 > playerTimerCount) {
+            clearInterval(_playerTimer);
+            nextPlayer();
+            return;
+        }
+        _ws.send(JSON.stringify({
+            "toH": WebSocketSettings.toGameRoomKey,
+            "type": "playerTimerCount",
+            "playerTimerCount": playerTimerCount,
+            "roomKey": WebSocketSettings.mRoomKey
+        }));
+        playerTimerCount--;
+    }, 1000);
 }
 
 let loopCount = 0;
@@ -747,6 +775,13 @@ function drawOthelloCanvas () {
     g.textAlign = "left";
     g.textBaseline = "bottom";
     g.fillText(statusMessage.string, boardPoint[0], boardPoint[1]-(sizeWH/50));
+    // 残り時間
+    g.beginPath ();
+    g.font = `${sizeWH/50}pt Arial`;
+    g.fillStyle = `rgba(255,255,255)`;
+    g.textAlign = "right";
+    g.textBaseline = "top";
+    g.fillText(playerTimerCount>0?playerTimerCount:"時間切れ", boardEndPoint[0], boardEndPoint[1] + sizeWH / 200);
     // 画面中央メッセージの描写
     if (showMessage.show) {
         // メッセージ背景

@@ -170,9 +170,14 @@ function websocketStart() {
                 }
                 if (data.type === "setOthelloEvery") {
                     statusMessage.string = `${playerColorString[data.setUser]}が設置しました。`;
+                    clearInterval(_playerTimer);
+                    playerTimerCount = 15;
                 }
                 if (data.type === "finish") {
                     WebSocketSettings.isFinish = true;
+                }
+                if (data.type === "playerTimerCount") {
+                    playerTimerCount = data.playerTimerCount;
                 }
             }
             if (data.leftHub) {
