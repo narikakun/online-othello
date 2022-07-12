@@ -145,7 +145,6 @@ function canvasMouseClick (e, cpu = false, panel = null)
             _clicked = true;
         }
         let nowCanvasClickSet = new Date().getTime();
-        console.log(nowCanvasClickSet-lastCanvasClick);
         if ((nowCanvasClickSet-lastCanvasClick)<1000) return;
         lastCanvasClick = nowCanvasClickSet;
         if (zeroIs) {
@@ -254,7 +253,6 @@ function showPlayerMessage (type = "next") {
             }
             break;
     }
-    console.log(`${showMessage.string} | ${nowNumber}`)
     showMessage.show = true;
     _clicked = true;
     clearTimeout(showMessage.timer);
@@ -301,6 +299,7 @@ let loopCount = 0;
  */
 function nextPlayer () {
     nowNumber++;
+    zeroIs = false;
     if ((playerList[3]&&playerList[4])?nowNumber > 4:nowNumber > 2) {
         nowNumber = 1;
     }
@@ -943,7 +942,6 @@ function cpGo () {
         }
     }
     let selectPoint = canPointFilter[Math.floor(Math.random() * canPointFilter.length)];
-    console.log(`CPU ${selectPoint}`)
     canvasMouseClick(null,true, selectPoint);
 }
 

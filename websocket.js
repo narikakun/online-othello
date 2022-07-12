@@ -38,7 +38,7 @@ function websocketStart() {
         _ws.send(JSON.stringify(	{"auth":WebSocketSettings.userId,"passwd":WebSocketSettings.userPwd}))
         //メッセージ受信
         _ws.onmessage = function(event) {
-            console.log(event.data);
+            //console.log(event.data);
             let data = JSON.parse(event.data);
             if (data.auth) {
                 if (data.auth === "OK") {
