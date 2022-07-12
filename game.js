@@ -126,6 +126,7 @@ window.addEventListener("load", function(){
 /*
  キャンバスクリック時の動作
  */
+let lastCanvasClick = new Date().getTime();
 function canvasMouseClick (e, cpu = false, panel = null)
 {
     let _panel = panel?panel:nowPanel;
@@ -143,6 +144,10 @@ function canvasMouseClick (e, cpu = false, panel = null)
             if (nowNumber !== myNumber) return;
             _clicked = true;
         }
+        let nowCanvasClickSet = new Date().getTime();
+        console.log(nowCanvasClickSet-lastCanvasClick);
+        if ((nowCanvasClickSet-lastCanvasClick)<1000) return;
+        lastCanvasClick = nowCanvasClickSet;
         if (zeroIs) {
             if (!zeroCanPoint[_panel[0]][_panel[1]]) {
                 _clicked = false;
@@ -259,8 +264,8 @@ function showPlayerMessage (type = "next") {
         if (type === "skip") {
             nextPlayer();
         } else if (type === "next") {
-            if (playerList[nowNumber].cpu) cpGo();
             if (WebSocketSettings.host) playerTimer();
+            if (playerList[nowNumber].cpu) cpGo();
         }
     }, 2000);
 }
@@ -927,13 +932,18 @@ function gContextSetPiece(xyr) {
  CPUの動作用
  */
 function cpGo () {
+    let canPointA = canPoint;
+    if (zeroIs) {
+        canPointA = zeroCanPoint;
+    }
     let canPointFilter = [];
-    for (const canPointKey in canPoint) {
-        for (const canPointKeyAs in canPoint[canPointKey]) {
-            if (canPoint[canPointKey][canPointKeyAs]) canPointFilter.push([Number(canPointKey), Number(canPointKeyAs)]);
+    for (const canPointKey in canPointA) {
+        for (const canPointKeyAs in canPointA[canPointKey]) {
+            if (canPointA[canPointKey][canPointKeyAs]) canPointFilter.push([Number(canPointKey), Number(canPointKeyAs)]);
         }
     }
     let selectPoint = canPointFilter[Math.floor(Math.random() * canPointFilter.length)];
+    console.log(`CPU ${selectPoint}`)
     canvasMouseClick(null,true, selectPoint);
 }
 

@@ -19,6 +19,7 @@ let WebSocketSettings = {
 }
 
 let _wsTimer = null;
+let lastSet = null;
 
 //OsakaHumanManyMany
 let _ws;
@@ -163,10 +164,22 @@ function websocketStart() {
                 }
                 if (data.type === "setOthello") {
                     if (data.FROM !== playerList[nowNumber].id) return;
+                    let nowSet = new Date().getTime();
+                    if ((nowSet-lastSet)<500) {
+                        _ws.send(JSON.stringify({
+                            "to": data.FROM,
+                            "type": "setFast",
+                            "roomKey": WebSocketSettings.mRoomKey
+                        }));
+                        return;
+                    }
                     zeroIs = false;
                     nowPiece[data.panel[0]][data.panel[1]] = nowNumber;
                     setOthelloTurn(data.panel[0], data.panel[1]);
                     nextPlayer();
+                }
+                if (data.type === "setFast") {
+                    _clicked = false;
                 }
                 if (data.type === "setOthelloEvery") {
                     statusMessage.string = `${playerColorString[data.setUser]}が設置しました。`;
