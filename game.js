@@ -426,7 +426,7 @@ function gameFinish () {
     pieceArray.sort((a, b) => b.value - a.value);
     g.font = `${sizeWH / 30}pt Arial`;
     for (let i = 0; i < 3; i++) {
-        if (pieceArray[i].value!==0) g.fillText(`${i+1}位: ${playerColorString[pieceArray[i].key]} => ${pieceArray[i].value}個 (${playerList[pieceArray[i].key].id==WebSocketSettings.userId?"あなた":playerList[pieceArray[i].key].id})`, boardPoint[0]+((boardEndPoint[0]-boardPoint[0])/2), boardPoint[1] + ((2.5 + i) * boardOneSize));
+        if (pieceArray[i].value!==0) g.fillText(`${i+1}位: ${playerColorString[pieceArray[i].key]} => ${pieceArray[i].value}個 (${playerList[pieceArray[i].key].id===WebSocketSettings.userId?"あなた":playerList[pieceArray[i].key].id})`, boardPoint[0]+((boardEndPoint[0]-boardPoint[0])/2), boardPoint[1] + ((2.5 + i) * boardOneSize));
     }
     if (!startNow) {
         // もう一度遊ぶボタン
@@ -969,10 +969,10 @@ function cpGo () {
     }
     let selectPoint = canPointFilter[Math.floor(Math.random() * canPointFilter.length)];
     // 端っこが取れるなら取る
-    let l1 = canPointFilter.find(f=>f[0]==0&&f[1]==0);
-    let l2 = canPointFilter.find(f=>f[0]==0&&f[1]==boardLength-1);
-    let r1 = canPointFilter.find(f=>f[0]==boardLength-1&&f[1]==0);
-    let r2 = canPointFilter.find(f=>f[0]==boardLength-1&&f[1]==boardLength-1);
+    let l1 = canPointFilter.find(f=>f[0]===0&&f[1]===0);
+    let l2 = canPointFilter.find(f=>f[0]===0&&f[1]===boardLength-1);
+    let r1 = canPointFilter.find(f=>f[0]===boardLength-1&&f[1]===0);
+    let r2 = canPointFilter.find(f=>f[0]===boardLength-1&&f[1]===boardLength-1);
     if (l1) selectPoint = l1;
     else if (l2) selectPoint = l2;
     else if (r1) selectPoint = r1;
