@@ -50,6 +50,7 @@ let myNumber = 99;
 let nowNumber = 99;
 
 let lastDraw = new Date().getTime();
+
 /*
  初期設定
  */
@@ -209,6 +210,9 @@ function canvasMouseClick (e, cpu = false, panel = null)
                 startCount();
             }
         }
+        if ((_panel[0] >= 2 && _panel[0] <= 5) && (_panel[1] === 5)) {
+            if (WebSocketSettings.isFinish) location.reload();
+        }
         _clicked = false;
     }
 }
@@ -328,6 +332,11 @@ function nextPlayer () {
                 "roomKey": WebSocketSettings.toGameRoomKey
             }));
             nowNumber = 5;
+            setTimeout(()=>{
+                WebSocketSettings.closed = true;
+                startNow = false;
+                _ws.close();
+            }, 2000);
         } else if (nowPieceCount === 0) {
             // 一つもピースがなくなった場合
             zeroIs = true;
@@ -349,6 +358,11 @@ function nextPlayer () {
                     "type": "finish",
                     "roomKey": WebSocketSettings.toGameRoomKey
                 }));
+                setTimeout(()=>{
+                    WebSocketSettings.closed = true;
+                    startNow = false;
+                    _ws.close();
+                }, 2000);
                 return;
             }
             // スキップ
@@ -411,11 +425,22 @@ function gameFinish () {
     let pieceArray = Object.keys(playerPiece).map((k)=>({ key: k, value: playerPiece[k] }));
     pieceArray.sort((a, b) => b.value - a.value);
     g.font = `${sizeWH / 30}pt Arial`;
-    g.fillText(`1位: ${playerColorString[pieceArray[0].key]} => ${pieceArray[0].value}個`, boardPoint[0]+((boardEndPoint[0]-boardPoint[0])/2), boardPoint[1] + (3.5 * boardOneSize));
-    g.fillText(`2位: ${playerColorString[pieceArray[1].key]} => ${pieceArray[1].value}個`, boardPoint[0]+((boardEndPoint[0]-boardPoint[0])/2), boardPoint[1] + (4.5 * boardOneSize));
-    g.fillText(`3位: ${playerColorString[pieceArray[2].key]} => ${pieceArray[2].value}個`, boardPoint[0]+((boardEndPoint[0]-boardPoint[0])/2), boardPoint[1] + (5.5 * boardOneSize));
-    g.fillText(`4位: ${playerColorString[pieceArray[3].key]} => ${pieceArray[3].value}個`, boardPoint[0]+((boardEndPoint[0]-boardPoint[0])/2), boardPoint[1] + (6.5 * boardOneSize));
-
+    for (let i = 0; i < 3; i++) {
+        if (pieceArray[i].value!==0) g.fillText(`${i+1}位: ${playerColorString[pieceArray[i].key]} => ${pieceArray[i].value}個 (${playerList[pieceArray[i].key].id==WebSocketSettings.userId?"あなた":playerList[pieceArray[i].key].id})`, boardPoint[0]+((boardEndPoint[0]-boardPoint[0])/2), boardPoint[1] + ((2.5 + i) * boardOneSize));
+    }
+    if (!startNow) {
+        // もう一度遊ぶボタン
+        g.beginPath();
+        g.fillStyle = "rgba(255, 255, 255)";
+        g.fillRect(boardPoint[0] + (2 * boardOneSize) + (boardLine * 2), boardPoint[1] + (5 * boardOneSize) + (boardLine * 5), (boardOneSize * 4) + boardLine * 3, boardOneSize);
+        // もう一度遊ぶ文字
+        g.beginPath();
+        g.font = `${sizeWH / 25}pt Arial`;
+        g.fillStyle = `rgba(0, 0, 0)`;
+        g.textAlign = "center";
+        g.textBaseline = "middle";
+        g.fillText("もう一度遊ぶ", boardPoint[0] + (4 * boardOneSize) + (boardLine * 4), boardPoint[1] + (5.5 * boardOneSize) + (boardLine * 6));
+    }
 }
 
 
@@ -734,6 +759,7 @@ function drawOthelloCanvas () {
         }
         nowX++;
     }
+
     if (WebSocketSettings.isFinish) {
         gameFinish();
     } else if (startNow) {
@@ -942,6 +968,15 @@ function cpGo () {
         }
     }
     let selectPoint = canPointFilter[Math.floor(Math.random() * canPointFilter.length)];
+    // 端っこが取れるなら取る
+    let l1 = canPointFilter.find(f=>f[0]==0&&f[1]==0);
+    let l2 = canPointFilter.find(f=>f[0]==0&&f[1]==boardLength-1);
+    let r1 = canPointFilter.find(f=>f[0]==boardLength-1&&f[1]==0);
+    let r2 = canPointFilter.find(f=>f[0]==boardLength-1&&f[1]==boardLength-1);
+    if (l1) selectPoint = l1;
+    else if (l2) selectPoint = l2;
+    else if (r1) selectPoint = r1;
+    else if (r2) selectPoint = r2;
     canvasMouseClick(null,true, selectPoint);
 }
 

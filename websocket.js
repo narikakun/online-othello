@@ -188,6 +188,11 @@ function websocketStart() {
                 }
                 if (data.type === "finish") {
                     WebSocketSettings.isFinish = true;
+                    setTimeout(()=>{
+                        WebSocketSettings.closed = true;
+                        startNow = false;
+                        _ws.close();
+                    }, 2000);
                 }
                 if (data.type === "playerTimerCount") {
                     playerTimerCount = data.playerTimerCount;
@@ -201,6 +206,7 @@ function websocketStart() {
                     statusMessage.string = "相手が切断したため終了しました。";
                     statusMessage.color = [255, 0, 0];
                     WebSocketSettings.isFinish = true;
+                    startNow = false;
                 } else {
                     if (WebSocketSettings.host) {
                         if (!WebSocketSettings.playerListA.includes(data.user)) return;
