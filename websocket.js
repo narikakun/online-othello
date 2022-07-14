@@ -8,6 +8,7 @@ let WebSocketSettings = {
     toGameRoomKey: null,
     host: true,
     playerListA: [],
+    nickNameListA: [],
     mRoomKey: String(Math.floor( Math.random() * (9999-1111) ) + 1111),
     roomHost: null,
     closed: false,
@@ -15,7 +16,8 @@ let WebSocketSettings = {
     playerListRoom: [],
     connected: false,
     started: false,
-    isFinish: false
+    isFinish: false,
+    nickname: null
 }
 
 let _wsTimer = null;
@@ -38,7 +40,7 @@ function websocketStart() {
         _ws.send(JSON.stringify(	{"auth":WebSocketSettings.userId,"passwd":WebSocketSettings.userPwd}))
         //メッセージ受信
         _ws.onmessage = function(event) {
-            //console.log(event.data);
+            console.log(event.data);
             let data = JSON.parse(event.data);
             if (data.auth) {
                 if (data.auth === "OK") {
@@ -57,8 +59,9 @@ function websocketStart() {
                         statusMessage.color = [255, 255, 255];
                         WebSocketSettings.playerListRoom = [];
                         WebSocketSettings.playerListRoom.push(WebSocketSettings.userId);
+                        WebSocketSettings.nickNameListA.push(WebSocketSettings.nickname);
                         statusMessage.string = `ルームに参加しました。他のプレイヤーを待っています... (${WebSocketSettings.playerListRoom.length}/${WebSocketSettings.playerListA.length})`;
-                        _ws.send(JSON.stringify({"toH":WebSocketSettings.toGameRoomKey, "type":"joinedCheck"}));
+                        _ws.send(JSON.stringify({"toH":WebSocketSettings.toGameRoomKey, "type":"joinedCheck", "nickname":WebSocketSettings.nickname}));
                     } else {
                         statusMessage.color = [255, 255, 255];
                         statusMessage.string = `ルームに参加しました。プレイヤーを探しています... (${WebSocketSettings.playerListA.length+1}/${WebSocketSettings.playerMax})`;
@@ -75,6 +78,7 @@ function websocketStart() {
                 if (data.type === "joinedCheck") {
                     statusMessage.color = [255, 255, 255];
                     WebSocketSettings.playerListRoom.push(data.FROM);
+                    WebSocketSettings.nickNameListA.push(data.nickname);
                     statusMessage.string = `ルームに参加しました。他のプレイヤーを待っています... (${WebSocketSettings.playerListRoom.length}/${WebSocketSettings.playerListA.length})`;
                     if (WebSocketSettings.host) {
                         if (WebSocketSettings.playerListA.length <= WebSocketSettings.playerListRoom.length) {
@@ -141,6 +145,7 @@ function websocketStart() {
                     zeroCanPoint = data.zeroCanPoint;
                     canPoint = data.canPoint;
                     zeroIs = data.zeroIs;
+                    setOthello = data.setOthello;
                     _clicked = false;
                     showPlayerMessage();
                 }
@@ -175,6 +180,10 @@ function websocketStart() {
                     }
                     zeroIs = false;
                     nowPiece[data.panel[0]][data.panel[1]] = nowNumber;
+                    setOthello.push({
+                        panel: data.panel,
+                        color: [255, 255, 0, 1]
+                    });
                     setOthelloTurn(data.panel[0], data.panel[1]);
                     nextPlayer();
                 }
@@ -182,6 +191,10 @@ function websocketStart() {
                     _clicked = false;
                 }
                 if (data.type === "setOthelloEvery") {
+                    setOthello.push({
+                        panel: data.panel,
+                        color: [255, 255, 0, 1]
+                    });
                     statusMessage.string = `${playerColorString[data.setUser]}が設置しました。`;
                     clearInterval(_playerTimer);
                     playerTimerCount = 15;
@@ -196,6 +209,9 @@ function websocketStart() {
                 }
                 if (data.type === "playerTimerCount") {
                     playerTimerCount = data.playerTimerCount;
+                }
+                if (data.type === "pushPlayerList") {
+                    playerList = data.playerList;
                 }
             }
             if (data.leftHub) {
@@ -275,18 +291,26 @@ function startCount () {
 function ws_startGame () {
     for (let i = 0; i < WebSocketSettings.playerMax; i++) {
         if (WebSocketSettings.playerListA[i]) {
-            playerList[i+1] = {
+            playerList[i + 1] = {
                 id: WebSocketSettings.playerListA[i],
-                name: playerColorString[i+1],
-                cpu: false
+                name: WebSocketSettings.nickNameListA[i] ? `${WebSocketSettings.nickNameListA[i]} (${playerColorString[i + 1]})` : playerColorString[i + 1],
+                cpu: false,
             }
-            if (WebSocketSettings.userId === WebSocketSettings.playerListA[i]) myNumber = i+1;
+            if (WebSocketSettings.userId === WebSocketSettings.playerListA[i]) myNumber = i + 1;
         } else {
-            playerList[i+1] = {
-                id: `CPU${i+1}`,
-                name: playerColorString[i+1],
+            playerList[i + 1] = {
+                id: `CPU${i + 1}`,
+                name: playerColorString[i + 1],
                 cpu: true
             }
+        }
+        if (WebSocketSettings.host) {
+            _ws.send(JSON.stringify({
+                "toH": WebSocketSettings.toGameRoomKey,
+                "type": "pushPlayerList",
+                "playerList": playerList,
+                "roomKey": WebSocketSettings.mRoomKey
+            }));
         }
     }
     statusMessage.color = [255, 255, 255];
@@ -313,4 +337,14 @@ function ws_goRoom () {
     _ws.close();
     _ws = null;
     websocketStart();
+}
+
+function getParam(name, url) {
+    if (!url) url = window.location.href;
+    name = name.replace(/[\[\]]/g, "\\$&");
+    let regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
+        results = regex.exec(url);
+    if (!results) return null;
+    if (!results[2]) return '';
+    return decodeURIComponent(results[2].replace(/\+/g, " "));
 }

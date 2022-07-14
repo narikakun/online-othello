@@ -29,6 +29,7 @@ let showMessage = {
     timer: null
 }
 let roomKeySetIs = false;
+let setOthello = [];
 
 let playerColor = { // プレイヤー一覧
     1: [0, 0, 0],
@@ -68,19 +69,21 @@ function init() {
     }
     if (!startNow) return;
     statusMessage.string = "ゲームを開始します。";
-    let boardLengthHalf = Math.floor(boardLength/2);
-    nowPiece[boardLengthHalf-1][boardLengthHalf-1] = 1; // 左上
-    nowPiece[boardLengthHalf][boardLengthHalf-1] = 2; // 右上
-    if (playerList[3] && playerList[4]) {
-        nowPiece[boardLengthHalf - 1][boardLengthHalf] = 3; // 左下
-        nowPiece[boardLengthHalf][boardLengthHalf] = 4; // 右下
-        nowPiece[boardLengthHalf+1][boardLengthHalf-1] = 4; // 右
-        nowPiece[boardLengthHalf][boardLengthHalf+1] = 3; // 下
-        nowPiece[boardLengthHalf - 2][boardLengthHalf] = 1; // 左
-        nowPiece[boardLengthHalf-1][boardLengthHalf-2] = 2; // 上
-    } else {
-        nowPiece[boardLengthHalf - 1][boardLengthHalf] = 2;
-        nowPiece[boardLengthHalf][boardLengthHalf] = 1;
+    if (WebSocketSettings.host) {
+        let boardLengthHalf = Math.floor(boardLength / 2);
+        nowPiece[boardLengthHalf - 1][boardLengthHalf - 1] = 1; // 左上
+        nowPiece[boardLengthHalf][boardLengthHalf - 1] = 2; // 右上
+        if (playerList[3] && playerList[4]) {
+            nowPiece[boardLengthHalf - 1][boardLengthHalf] = 3; // 左下
+            nowPiece[boardLengthHalf][boardLengthHalf] = 4; // 右下
+            nowPiece[boardLengthHalf + 1][boardLengthHalf - 1] = 4; // 右
+            nowPiece[boardLengthHalf][boardLengthHalf + 1] = 3; // 下
+            nowPiece[boardLengthHalf - 2][boardLengthHalf] = 1; // 左
+            nowPiece[boardLengthHalf - 1][boardLengthHalf - 2] = 2; // 上
+        } else {
+            nowPiece[boardLengthHalf - 1][boardLengthHalf] = 2;
+            nowPiece[boardLengthHalf][boardLengthHalf] = 1;
+        }
     }
     nextPlayer();
 }
@@ -112,6 +115,23 @@ window.addEventListener("resize", function(){
  起動処理
  */
 window.addEventListener("load", function(){
+    // クッキーからニックネーム
+    let cookies = document.cookie;
+    let cookiesArray = cookies.split(';');
+
+    for(let c of cookiesArray){
+        let cArray = c.split('=');
+        if( cArray[0] == 'nickname'){
+            WebSocketSettings.nickname = cArray[1];
+        }
+    }
+    if (!WebSocketSettings.nickname) {
+        let inputNickname = window.prompt("ゲーム内で利用するニックネームを設定できます。（そのままスキップも可能です。）", "");
+        if (inputNickname) {
+            WebSocketSettings.nickname = inputNickname;
+            document.cookie = "nickname="+inputNickname;
+        }
+    }
     // キャンバスの親要素情報取得（親要素が無いとキャンバスのサイズが画面いっぱいに表示できないため）
     wrapper = $id("wrapper");
     // キャンバス情報取得
@@ -122,6 +142,12 @@ window.addEventListener("load", function(){
     // 初期設定
     getSize();
     init();
+    // ルームキーを初期で設定できるように（GETパラメータ）
+    let roomKeyC = getParam("roomKey");
+    if (roomKeyC) {
+        WebSocketSettings.roomKey = roomKeyC;
+        websocketStart();
+    }
 });
 
 /*
@@ -163,12 +189,18 @@ function canvasMouseClick (e, cpu = false, panel = null)
             zeroIs = false;
             nowPiece[_panel[0]][_panel[1]] = nowNumber;
             setOthelloTurn(_panel[0], _panel[1]);
+            setOthello.push({
+                panel: _panel,
+                color: [255, 255, 0, 1]
+            });
             statusMessage.string = `${playerColorString[nowNumber]}が設置しました。`;
             _ws.send(JSON.stringify({
                 "toH": WebSocketSettings.toGameRoomKey,
                 "type": "setOthelloEvery",
                 "roomKey": WebSocketSettings.toGameRoomKey,
-                "setUser": nowNumber
+                "setUser": nowNumber,
+                "panel": _panel,
+                "setOthello": setOthello
             }));
             clearInterval(_playerTimer);
             playerTimerCount = 15;
@@ -180,12 +212,17 @@ function canvasMouseClick (e, cpu = false, panel = null)
                 "roomKey": WebSocketSettings.toGameRoomKey,
                 "panel": _panel
             }));
+            setOthello.push({
+                panel: _panel,
+                color: [255, 255, 0, 1]
+            });
             statusMessage.string = `${playerColorString[nowNumber]}が設置しました。`;
             _ws.send(JSON.stringify({
                 "toH": WebSocketSettings.toGameRoomKey,
                 "type": "setOthelloEvery",
                 "roomKey": WebSocketSettings.toGameRoomKey,
-                "setUser": nowNumber
+                "setUser": nowNumber,
+                "panel": _panel
             }));
         }
     } else {
@@ -246,14 +283,14 @@ function showPlayerMessage (type = "next") {
             if (myNumber === nowNumber) {
                 showMessage.string = "あなたのターンです。";
             } else {
-                showMessage.string = `${playerColorString[nowNumber]}のターンです。`;
+                showMessage.string = `${playerList[nowNumber].name}のターンです。`;
             }
             break;
         case "skip":
             if (myNumber === nowNumber) {
                 showMessage.string = "あなたはスキップされます。";
             } else {
-                showMessage.string = `${playerColorString[nowNumber]}がスキップです。`;
+                showMessage.string = `${playerList[nowNumber].name}がスキップです。`;
             }
             break;
     }
@@ -391,7 +428,8 @@ function nextPlayer () {
             "nowPiece": nowPiece,
             "zeroCanPoint": zeroCanPoint,
             "zeroIs": zeroIs,
-            "canPoint": canPoint
+            "canPoint": canPoint,
+            "setOthello": setOthello
         }));
         showPlayerMessage();
     }
@@ -578,8 +616,10 @@ function setOthelloTurn (x, y) {
         }
     }
     if (rightCount !== null) {
+        console.log(rightCount-x);
         for (let i = x; i <= rightCount; i++) {
             nowPiece[i][y] = nowNumber;
+            if (rightCount-x>=2) setWPiece(i,y);
         }
     }
 
@@ -597,6 +637,7 @@ function setOthelloTurn (x, y) {
     if (downCount !== null) {
         for (let i = y; i <= downCount; i++) {
             nowPiece[x][i] = nowNumber;
+            if (downCount-y>=2) setWPiece(x, i);
         }
     }
 
@@ -614,6 +655,7 @@ function setOthelloTurn (x, y) {
     if (leftCount !== null) {
         for (let i = leftCount; i <= x; i++) {
             nowPiece[i][y] = nowNumber;
+            if (x-leftCount>=2) setWPiece(i,y);
         }
     }
 
@@ -631,6 +673,7 @@ function setOthelloTurn (x, y) {
     if (upCount !== null) {
         for (let i = upCount; i <= y; i++) {
             nowPiece[x][i] = nowNumber;
+            if (y-upCount>=2) setWPiece(x,i);
         }
     }
 
@@ -648,6 +691,7 @@ function setOthelloTurn (x, y) {
     if (rightUpCount !== null) {
         for (let i = x; i <= rightUpCount; i++) {
             nowPiece[i][y+(x-i)] = nowNumber;
+            if (rightUpCount-x>=2) setWPiece(i, y+(x-i));
         }
     }
 
@@ -665,6 +709,7 @@ function setOthelloTurn (x, y) {
     if (leftDownCount !== null) {
         for (let i = y; i <= leftDownCount; i++) {
             nowPiece[x+(y-i)][i] = nowNumber;
+            if (leftDownCount-y>=2) setWPiece(x+(y-i),i);
         }
     }
 
@@ -682,6 +727,7 @@ function setOthelloTurn (x, y) {
     if (rightDownCount !== null) {
         for (let i = x; i <= rightDownCount; i++) {
             nowPiece[i][y-(x-i)] = nowNumber;
+            if (rightDownCount-x>=2) setWPiece(i, y-(x-i));
         }
     }
 
@@ -699,8 +745,36 @@ function setOthelloTurn (x, y) {
     if (leftUpCount !== null) {
         for (let i = leftUpCount; i <= y; i++) {
             nowPiece[x-(y-i)][i] = nowNumber;
+            if (y-leftUpCount>=2) setWPiece(x-(y-i), i);
         }
     }
+}
+
+/*
+ 以前と違うピースの色
+ */
+function beforeAfterPiece (_nowPiece, _beforePiece) {
+    console.log(_beforePiece);
+    console.log(_nowPiece);
+    for (let i = 0; i < boardLength; i++) {
+        if (!_beforePiece) break;
+        for (let ib = 0; ib < boardLength; ib++) {
+            if (_beforePiece[i][ib] !== _nowPiece[i][ib]) {
+                console.log(_beforePiece[i][ib])
+                setOthello.push({
+                    panel: [i, ib],
+                    color: [255, 255, 0, 1]
+                });
+            }
+        }
+    }
+}
+
+function setWPiece (x, y) {
+    setOthello.push({
+        panel: [x, y],
+        color: [255, 255, 0, 1]
+    });
 }
 
 /*
@@ -740,6 +814,14 @@ function drawOthelloCanvas () {
         g.fillStyle = "rgb(56, 118, 29)";
         g.fillRect(boardPoint[0] + (nowX * boardOneSize) + (boardLine*nowX), boardPoint[1] + (nowY * boardOneSize) + (boardLine*nowY), boardOneSize, boardOneSize);
         let pieceXyR = [boardPoint[0] + ((nowX+1) * boardOneSize) + (boardLine*nowX) - (boardOneSize/2), boardPoint[1] + ((nowY+1) * boardOneSize) + (boardLine*nowY) - (boardOneSize/2), boardOneSize/2.3];
+        let setOthelloFind = setOthello.findIndex(f => f.panel[0] === nowX && f.panel[1] === nowY);
+        if (setOthelloFind !== -1) {
+            g.beginPath();
+            g.fillStyle = `rgba(${setOthello[setOthelloFind].color[0]}, ${setOthello[setOthelloFind].color[1]}, ${setOthello[setOthelloFind].color[2]}, ${setOthello[setOthelloFind].color[3]})`;
+            g.fillRect(boardPoint[0] + (nowX * boardOneSize) + (boardLine * nowX), boardPoint[1] + (nowY * boardOneSize) + (boardLine * nowY), boardOneSize, boardOneSize)
+            setOthello[setOthelloFind].color[3] = setOthello[setOthelloFind].color[3]-0.1;
+            if (setOthello[setOthelloFind].color[3] <= 0) setOthello = setOthello.filter(f => f.panel[0] !== nowX && f.panel[1] !== nowY);
+        }
         if (nowX === nowPanel[0] && nowY === nowPanel[1] && nowPiece[nowX][nowY] == null && nowNumber === myNumber) {
             gContextSetPiece(pieceXyR);
             g.fillStyle = `rgba(${playerColor[nowNumber]}, 0.6)`;
@@ -782,7 +864,7 @@ function drawOthelloCanvas () {
             }
         }
         if (playerList[nowNumber]) {
-            g.fillText(`参加人数: ${WebSocketSettings.playerListA.length}人 | ${playerList[nowNumber].name}の数: ${playerListPieceCount[nowNumber]} | あなたは ${playerColorString[myNumber]}`, boardPoint[0], boardEndPoint[1] + sizeWH / 200);
+            g.fillText(`参加人数: ${WebSocketSettings.playerListA.length}人 | ${playerList[nowNumber].name}の数: ${playerListPieceCount[nowNumber]} | あなたは ${playerColorString[myNumber]}`, boardPoint[0], boardEndPoint[1] + sizeWH / 200, boardEndPoint[0]-boardPoint[0]);
         }
     } else {
         // タイトル画面
@@ -804,7 +886,7 @@ function drawOthelloCanvas () {
     g.fillStyle = `rgba(${statusMessage.color[0]}, ${statusMessage.color[1]}, ${statusMessage.color[2]})`;
     g.textAlign = "left";
     g.textBaseline = "bottom";
-    g.fillText(statusMessage.string, boardPoint[0], boardPoint[1]-(sizeWH/50));
+    g.fillText(statusMessage.string, boardPoint[0], boardPoint[1]-(sizeWH/50), boardEndPoint[0]-boardPoint[0]);
     // 残り時間
     g.beginPath ();
     g.font = `${sizeWH/50}pt Arial`;
@@ -824,7 +906,7 @@ function drawOthelloCanvas () {
         g.fillStyle = `rgba(${showMessage.color[0]}, ${showMessage.color[1]}, ${showMessage.color[2]})`;
         g.textAlign = "center";
         g.textBaseline = "middle";
-        g.fillText(showMessage.string, boardPoint[0]+((boardEndPoint[0]-boardPoint[0])/2), (boardEndPoint[1]-boardPoint[1])/2);
+        g.fillText(showMessage.string, boardPoint[0]+((boardEndPoint[0]-boardPoint[0])/2), (boardEndPoint[1]-boardPoint[1])/2, boardEndPoint[0]-boardPoint[0]);
     }
 }
 
