@@ -179,7 +179,7 @@ function websocketStart() {
                         return;
                     }
                     zeroIs = false;
-                    nowPiece[data.panel[0]][data.panel[1]] = nowNumber;
+                    nowPiece[data.panel[0]][data.panel[1]].id = nowNumber;
                     setOthello.push({
                         panel: data.panel,
                         color: [255, 255, 0, 1]
