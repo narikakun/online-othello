@@ -1,3 +1,5 @@
+// もう一度遊ぶボタンが押せないバグ
+
 let wrapper = null;	// キャンバスの親要素
 let canvas = null;	// キャンバス
 let g = null; // コンテキスト
