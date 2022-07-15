@@ -18,7 +18,7 @@ let WebSocketSettings = {
     started: false,
     isFinish: false,
     nickname: null,
-    version: "202207151530"
+    version: "202207151531"
 }
 WebSocketSettings.ws.url = WebSocketSettings.ws.url + `_${WebSocketSettings.version}`;
 
@@ -65,6 +65,15 @@ function websocketStart() {
                         WebSocketSettings.nickNameListA.push(WebSocketSettings.nickname);
                         statusMessage.string = `ルームに参加しました。他のプレイヤーを待っています... (${WebSocketSettings.playerListRoom.length}/${WebSocketSettings.playerListA.length})`;
                         _ws.send(JSON.stringify({"toH":WebSocketSettings.toGameRoomKey, "type":"joinedCheck", "nickname":WebSocketSettings.nickname}));
+                        if (WebSocketSettings.host) {
+                            _wsPingTimer = setInterval(() => {
+                                WebSocketSettings.playerListRoom = [];
+                                _ws.send(JSON.stringify({
+                                    "toH": WebSocketSettings.toGameRoomKey,
+                                    "type": "pleaseJoinedPing"
+                                }));
+                            }, 5000);
+                        }
                     } else {
                         statusMessage.color = [255, 255, 255];
                         statusMessage.string = `ルームに参加しました。プレイヤーを探しています... (${WebSocketSettings.playerListA.length+1}/${WebSocketSettings.playerMax})`;
@@ -87,14 +96,6 @@ function websocketStart() {
                         if (WebSocketSettings.playerListA.length <= WebSocketSettings.playerListRoom.length) {
                             _ws.send(JSON.stringify({"toH":WebSocketSettings.toGameRoomKey, "type":"startGame"}));
                             ws_startGame();
-                        } else {
-                            _wsPingTimer = setInterval(() => {
-                                WebSocketSettings.playerListRoom = [];
-                                _ws.send(JSON.stringify({
-                                    "toH": WebSocketSettings.toGameRoomKey,
-                                    "type": "pleaseJoinedPing"
-                                }));
-                            }, 5000);
                         }
                     }
                 }
