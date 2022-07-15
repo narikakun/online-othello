@@ -321,8 +321,8 @@ function showPlayerMessage (type = "next") {
 let _playerTimer = null;
 let playerTimerCount = 15;
 function playerTimer () {
-    if (!startNow) return;
     clearInterval(_playerTimer);
+    if (!startNow) return;
     playerTimerCount = 15;
     _playerTimer = setInterval(() => {
         if (0 > playerTimerCount) {
@@ -387,6 +387,7 @@ function nextPlayer () {
             for (let i = 0; i < boardLength; i++) {
                 zeroCanPoint[i] = {};
                 for (let ib = 0; ib < boardLength; ib++) {
+                    if (nowPiece[i][ib].id) continue;
                     for (let d = -1; d <= 1; d++) {
                         for (let e = -1; e <= 1; e++) {
                             if (nowPiece[i + d][ib + e].id !== null) zeroCanPoint[i][ib] = true;
@@ -477,14 +478,14 @@ function gameFinish () {
         // もう一度遊ぶボタン
         g.beginPath();
         g.fillStyle = "rgba(255, 255, 255)";
-        g.fillRect(boardPoint[0] + (2 * boardOneSize) + (boardLine * 2), boardPoint[1] + (5 * boardOneSize) + (boardLine * 5), (boardOneSize * 4) + boardLine * 3, boardOneSize);
+        g.fillRect(boardPoint[0] + (2 * boardOneSize) + (boardLine * 2), boardPoint[1] + (6 * boardOneSize) + (boardLine * 6), (boardOneSize * 4) + boardLine * 3, boardOneSize);
         // もう一度遊ぶ文字
         g.beginPath();
         g.font = `${sizeWH / 25}pt Arial`;
         g.fillStyle = `rgba(0, 0, 0)`;
         g.textAlign = "center";
         g.textBaseline = "middle";
-        g.fillText("もう一度遊ぶ", boardPoint[0] + (4 * boardOneSize) + (boardLine * 4), boardPoint[1] + (5.5 * boardOneSize) + (boardLine * 6));
+        g.fillText("もう一度遊ぶ", boardPoint[0] + (4 * boardOneSize) + (boardLine * 4), boardPoint[1] + (6.5 * boardOneSize) + (boardLine * 7));
     }
 }
 
@@ -734,10 +735,12 @@ function setWPiece (sX, sY, x, y, number) {
     }
     nowPiece[x][y].old = nowPiece[x][y].id;
     nowPiece[x][y].id = number;
-    setOthello.push({
-        panel: [x, y],
-        color: [255, 255, 0, 1]
-    });
+    if ((sX == x && sY == y)) {
+        setOthello.push({
+            panel: [x, y],
+            color: [255, 255, 0, 1]
+        });
+    }
 }
 
 /*
@@ -777,7 +780,6 @@ function drawOthelloCanvas () {
         g.fillStyle = "rgb(56, 118, 29)";
         g.fillRect(boardPoint[0] + (nowX * boardOneSize) + (boardLine*nowX), boardPoint[1] + (nowY * boardOneSize) + (boardLine*nowY), boardOneSize, boardOneSize);
         let pieceXyR = [boardPoint[0] + ((nowX+1) * boardOneSize) + (boardLine*nowX) - (boardOneSize/2), boardPoint[1] + ((nowY+1) * boardOneSize) + (boardLine*nowY) - (boardOneSize/2), boardOneSize/2.3];
-        /*
         let setOthelloFind = setOthello.findIndex(f => f.panel[0] === nowX && f.panel[1] === nowY);
         if (setOthelloFind !== -1) {
             g.beginPath();
@@ -786,7 +788,6 @@ function drawOthelloCanvas () {
             setOthello[setOthelloFind].color[3] = setOthello[setOthelloFind].color[3]-0.1;
             if (setOthello[setOthelloFind].color[3] <= 0) setOthello = setOthello.filter(f => f.panel[0] !== nowX && f.panel[1] !== nowY);
         }
-         */
         if (nowX === nowPanel[0] && nowY === nowPanel[1] && nowPiece[nowX][nowY].id == null && nowNumber === myNumber) {
             gContextSetPiece(pieceXyR);
             g.fillStyle = `rgba(${playerColor[nowNumber]}, 0.6)`;
@@ -795,14 +796,17 @@ function drawOthelloCanvas () {
             g.fillStyle = `rgba(${playerColor[nowPiece[nowX][nowY].id]})`;
             let r = 1;
             if (nowPiece[nowX][nowY].r) {
-                if (nowPiece[nowX][nowY].r <= 10) {
+                let rA = nowPiece[nowX][nowY].rA?nowPiece[nowX][nowY].rA:1;
+                if (nowPiece[nowX][nowY].r <= 8) {
                     nowPiece[nowX][nowY].r = nowPiece[nowX][nowY].r + 0.3;
-                    if (nowPiece[nowX][nowY].r < 5) {
-                        g.fillStyle = `rgba(${playerColor[nowPiece[nowX][nowY].old]})`;
+                    if (nowPiece[nowX][nowY].r < 4) {
                         r = nowPiece[nowX][nowY].r;
+                        if (rA>0) nowPiece[nowX][nowY].rA=rA-0.1;
+                        g.fillStyle = `rgba(${playerColor[nowPiece[nowX][nowY].old]}, ${rA})`;
                     } else {
-                        g.fillStyle = `rgba(${playerColor[nowPiece[nowX][nowY].id]})`;
                         r = 10-nowPiece[nowX][nowY].r;
+                        if (rA<1) nowPiece[nowX][nowY].rA=rA+0.1;
+                        g.fillStyle = `rgba(${playerColor[nowPiece[nowX][nowY].id]}, ${rA})`;
                     }
                 }
             }

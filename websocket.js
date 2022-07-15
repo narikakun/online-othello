@@ -22,6 +22,7 @@ let WebSocketSettings = {
 
 let _wsTimer = null;
 let lastSet = null;
+let _wsPingTimer = null;
 
 //OsakaHumanManyMany
 let _ws;
@@ -82,6 +83,29 @@ function websocketStart() {
                     statusMessage.string = `ルームに参加しました。他のプレイヤーを待っています... (${WebSocketSettings.playerListRoom.length}/${WebSocketSettings.playerListA.length})`;
                     if (WebSocketSettings.host) {
                         if (WebSocketSettings.playerListA.length <= WebSocketSettings.playerListRoom.length) {
+                            _ws.send(JSON.stringify({"toH":WebSocketSettings.toGameRoomKey, "type":"startGame"}));
+                            ws_startGame();
+                        } else {
+                            _wsPingTimer = setInterval(() => {
+                                WebSocketSettings.playerListRoom = [];
+                                _ws.send(JSON.stringify({
+                                    "toH": WebSocketSettings.toGameRoomKey,
+                                    "type": "pleaseJoinedPing"
+                                }));
+                            }, 5000);
+                        }
+                    }
+                }
+                if (data.type === "pleaseJoinedPing") {
+                    _ws.send(JSON.stringify({"to":WebSocketSettings.roomHost, "type":"joinedPing", "nickname":WebSocketSettings.nickname}));
+                }
+                if (data.type === "joinedPing") {
+                    if (WebSocketSettings.host) {
+                        WebSocketSettings.playerListRoom.push(data.FROM);
+                        WebSocketSettings.nickNameListA.push(data.nickname);
+
+                        if (WebSocketSettings.playerListA.length <= WebSocketSettings.playerListRoom.length) {
+                            clearInterval(_wsPingTimer);
                             _ws.send(JSON.stringify({"toH":WebSocketSettings.toGameRoomKey, "type":"startGame"}));
                             ws_startGame();
                         }
@@ -316,6 +340,7 @@ function ws_startGame () {
     statusMessage.color = [255, 255, 255];
     statusMessage.string = "ゲームを開始します。";
     startNow = true;
+    clearInterval(_wsPingTimer);
     init();
 
 }
