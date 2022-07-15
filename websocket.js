@@ -8,7 +8,7 @@ let WebSocketSettings = {
     toGameRoomKey: null,
     host: true,
     playerListA: [],
-    nickNameListA: [],
+    nickNameListA: {},
     mRoomKey: String(Math.floor( Math.random() * (9999-1111) ) + 1111),
     roomHost: null,
     closed: false,
@@ -18,7 +18,7 @@ let WebSocketSettings = {
     started: false,
     isFinish: false,
     nickname: null,
-    version: "202207151532"
+    version: "202207151533"
 }
 WebSocketSettings.ws.url = WebSocketSettings.ws.url + `_${WebSocketSettings.version}`;
 
@@ -62,14 +62,14 @@ function websocketStart() {
                         statusMessage.color = [255, 255, 255];
                         WebSocketSettings.playerListRoom = [];
                         WebSocketSettings.playerListRoom.push(WebSocketSettings.userId);
-                        WebSocketSettings.nickNameListA.push(WebSocketSettings.nickname);
+                        WebSocketSettings.nickNameListA[WebSocketSettings.userId] = WebSocketSettings.nickname;
                         statusMessage.string = `ルームに参加しました。他のプレイヤーを待っています... (${WebSocketSettings.playerListRoom.length}/${WebSocketSettings.playerListA.length})`;
                         _ws.send(JSON.stringify({"toH":WebSocketSettings.toGameRoomKey, "type":"joinedCheck", "nickname":WebSocketSettings.nickname}));
                         if (WebSocketSettings.host) {
                             _wsPingTimer = setInterval(() => {
                                 WebSocketSettings.playerListRoom = [];
                                 WebSocketSettings.playerListRoom.push(WebSocketSettings.userId);
-                                WebSocketSettings.nickNameListA.push(WebSocketSettings.nickname);
+                                WebSocketSettings.nickNameListA[WebSocketSettings.userId] = WebSocketSettings.nickname;
                                 _ws.send(JSON.stringify({
                                     "toH": WebSocketSettings.toGameRoomKey,
                                     "type": "pleaseJoinedPing"
@@ -92,7 +92,7 @@ function websocketStart() {
                 if (data.type === "joinedCheck") {
                     statusMessage.color = [255, 255, 255];
                     WebSocketSettings.playerListRoom.push(data.FROM);
-                    WebSocketSettings.nickNameListA.push(data.nickname);
+                    WebSocketSettings.nickNameListA[data.FROM] = data.nickname;
                     statusMessage.string = `ルームに参加しました。他のプレイヤーを待っています... (${WebSocketSettings.playerListRoom.length}/${WebSocketSettings.playerListA.length})`;
                     if (WebSocketSettings.host) {
                         if (WebSocketSettings.playerListA.length <= WebSocketSettings.playerListRoom.length) {
@@ -107,7 +107,7 @@ function websocketStart() {
                 if (data.type === "joinedPing") {
                     if (WebSocketSettings.host) {
                         WebSocketSettings.playerListRoom.push(data.FROM);
-                        WebSocketSettings.nickNameListA.push(data.nickname);
+                        WebSocketSettings.nickNameListA[data.FROM] = data.nickname;
 
                         if (WebSocketSettings.playerListA.length <= WebSocketSettings.playerListRoom.length) {
                             clearInterval(_wsPingTimer);
@@ -322,7 +322,7 @@ function ws_startGame () {
         if (WebSocketSettings.playerListA[i]) {
             playerList[i + 1] = {
                 id: WebSocketSettings.playerListA[i],
-                name: WebSocketSettings.nickNameListA[i] ? `${WebSocketSettings.nickNameListA[i]} (${playerColorString[i + 1]})` : playerColorString[i + 1],
+                name: WebSocketSettings.nickNameListA[WebSocketSettings.playerListA[i].id] ? `${WebSocketSettings.nickNameListA[WebSocketSettings.playerListA[i].id]} (${playerColorString[i + 1]})` : playerColorString[i + 1],
                 cpu: false,
             }
             if (WebSocketSettings.userId === WebSocketSettings.playerListA[i]) myNumber = i + 1;
