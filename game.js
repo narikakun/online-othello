@@ -759,17 +759,17 @@ function canPointSet () {
  オセロのキャンバスを作る
  */
 function drawOthelloCanvas () {
-    // バージョン情報
-    g.beginPath();
-    g.font = `${sizeWH / 30}pt Arial`;
-    g.fillStyle = `rgba(255,255,255)`;
-    g.textAlign = "left";
-    g.textBaseline = "top";
-    g.fillText(`${WebSocketSettings.version}`, 0,0);
     // キャンバスをリセット（黒色）
     g.beginPath ();
     g.fillStyle = "rgba(0, 0, 0)";
     g.fillRect(0, 0, canvas.width, canvas.height);
+    // バージョン情報
+    g.beginPath();
+    g.font = `${sizeWH / 90}pt Arial`;
+    g.fillStyle = `rgba(255,255,255)`;
+    g.textAlign = "left";
+    g.textBaseline = "top";
+    g.fillText(`Ver.${WebSocketSettings.version}`, 10,10);5
     // 背景を描写
     g.beginPath ();
     g.fillStyle = "rgba(19, 19, 19)";
