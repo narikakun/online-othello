@@ -18,7 +18,7 @@ let WebSocketSettings = {
     started: false,
     isFinish: false,
     nickname: null,
-    version: "202207151531"
+    version: "202207151532"
 }
 WebSocketSettings.ws.url = WebSocketSettings.ws.url + `_${WebSocketSettings.version}`;
 
@@ -68,6 +68,8 @@ function websocketStart() {
                         if (WebSocketSettings.host) {
                             _wsPingTimer = setInterval(() => {
                                 WebSocketSettings.playerListRoom = [];
+                                WebSocketSettings.playerListRoom.push(WebSocketSettings.userId);
+                                WebSocketSettings.nickNameListA.push(WebSocketSettings.nickname);
                                 _ws.send(JSON.stringify({
                                     "toH": WebSocketSettings.toGameRoomKey,
                                     "type": "pleaseJoinedPing"
