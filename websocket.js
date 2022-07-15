@@ -17,8 +17,10 @@ let WebSocketSettings = {
     connected: false,
     started: false,
     isFinish: false,
-    nickname: null
+    nickname: null,
+    version: "202207151530"
 }
+WebSocketSettings.ws.url = WebSocketSettings.ws.url + `_${WebSocketSettings.version}`;
 
 let _wsTimer = null;
 let lastSet = null;
