@@ -1,5 +1,3 @@
-// もう一度遊ぶボタンが押せないバグ
-
 let wrapper = null;	// キャンバスの親要素
 let canvas = null;	// キャンバス
 let g = null; // コンテキスト
@@ -255,7 +253,7 @@ function canvasMouseClick (e, cpu = false, panel = null)
                 startCount();
             }
         }
-        if ((_panel[0] >= 2 && _panel[0] <= 5) && (_panel[1] === 5)) {
+        if ((_panel[0] >= 2 && _panel[0] <= 5) && (_panel[1] === 6)) {
             if (WebSocketSettings.isFinish) location.reload();
         }
         _clicked = false;
@@ -449,7 +447,17 @@ function nextPlayer () {
 /*
  終わった時の動作
  */
+let finishA = 0;
+let finishB = false;
+let finishC = false;
 function gameFinish () {
+    console.log(1);
+    if (finishA < 20) {
+        finishA++;
+        finishB = false;
+    } else {
+        if (!finishC) finishB = true;
+    }
     statusMessage.string = `ゲームが終了しました。`;
     // 背景
     g.beginPath();
@@ -468,6 +476,24 @@ function gameFinish () {
         for (let i2 = 0; i2 < boardLength; i2++) {
             if (nowPiece[i][i2].id == null) continue;
             playerPiece[nowPiece[i][i2].id]++;
+        }
+    }
+    if (finishB && playerPiece[myNumber]) {
+        finishC = true;
+        finishB = false;
+        let groupId = getParam("groupId");
+        let groupPassword = getParam("groupPassword");
+        let userId = getParam("userId");
+        if (groupId && groupPassword && userId) {
+            let xhr = new XMLHttpRequest();
+            xhr.open('POST', 'https://gameapi.nakn.jp/othello/api/?putData=1', true);
+            xhr.setRequestHeader("Content-Type", "application/json");
+            xhr.send(JSON.stringify({
+                "userId": userId,
+                "groupId": groupId,
+                "groupPassword": groupPassword,
+                "points": playerPiece[myNumber]
+            }));
         }
     }
     let pieceArray = Object.keys(playerPiece).map((k)=>({ key: k, value: playerPiece[k] }));
