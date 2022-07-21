@@ -833,12 +833,15 @@ function drawOthelloCanvas () {
                 let rA = nowPiece[nowX][nowY].rA?nowPiece[nowX][nowY].rA:1;
                 if (nowPiece[nowX][nowY].r <= 8) {
                     nowPiece[nowX][nowY].r = nowPiece[nowX][nowY].r + 0.3;
+                    if (nowPiece[nowX][nowY].r >= 3 && nowPiece[nowX][nowY].r <= 6) {
+                        nowPiece[nowX][nowY].r = nowPiece[nowX][nowY].r + 0.3;
+                    }
                     if (nowPiece[nowX][nowY].r < 4) {
                         r = nowPiece[nowX][nowY].r;
                         if (rA>0) nowPiece[nowX][nowY].rA=rA-0.1;
                         g.fillStyle = `rgba(${playerColor[nowPiece[nowX][nowY].old]}, ${rA})`;
                     } else {
-                        r = 10-nowPiece[nowX][nowY].r;
+                        r = 8-nowPiece[nowX][nowY].r;
                         if (rA<1) nowPiece[nowX][nowY].rA=rA+0.1;
                         g.fillStyle = `rgba(${playerColor[nowPiece[nowX][nowY].id]}, ${rA})`;
                     }
