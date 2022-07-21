@@ -498,7 +498,7 @@ function gameFinish () {
     let pieceArray = Object.keys(playerPiece).map((k)=>({ key: k, value: playerPiece[k] }));
     pieceArray.sort((a, b) => b.value - a.value);
     g.font = `${sizeWH / 30}pt Arial`;
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < 4; i++) {
         if (pieceArray[i].value!==0) g.fillText(`${i+1}位: ${playerColorString[pieceArray[i].key]} => ${pieceArray[i].value}個 (${playerList[pieceArray[i].key].id===WebSocketSettings.userId?"あなた":playerList[pieceArray[i].key].name})`, boardPoint[0]+((boardEndPoint[0]-boardPoint[0])/2), boardPoint[1] + ((2.5 + i) * boardOneSize), (boardEndPoint[0] - boardPoint[0]) - ((sizeWH / 30)*2));
     }
     if (!startNow) {
