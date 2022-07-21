@@ -18,7 +18,7 @@ let WebSocketSettings = {
     started: false,
     isFinish: false,
     nickname: null,
-    version: "202207151533"
+    version: "202207211111"
 }
 WebSocketSettings.ws.url = WebSocketSettings.ws.url + `_${WebSocketSettings.version}`;
 

@@ -451,7 +451,6 @@ let finishA = 0;
 let finishB = false;
 let finishC = false;
 function gameFinish () {
-    console.log(1);
     if (finishA < 20) {
         finishA++;
         finishB = false;
