@@ -18,7 +18,7 @@ let WebSocketSettings = {
     started: false,
     isFinish: false,
     nickname: null,
-    version: "202207211500"
+    version: "202207251433"
 }
 WebSocketSettings.ws.url = WebSocketSettings.ws.url + `_${WebSocketSettings.version}`;
 
@@ -322,7 +322,7 @@ function ws_startGame () {
         if (WebSocketSettings.playerListA[i]) {
             playerList[i + 1] = {
                 id: WebSocketSettings.playerListA[i],
-                name: WebSocketSettings.nickNameListA[WebSocketSettings.playerListA[i].id] ? `${WebSocketSettings.nickNameListA[WebSocketSettings.playerListA[i].id]} (${playerColorString[i + 1]})` : playerColorString[i + 1],
+                name: WebSocketSettings.nickNameListA[WebSocketSettings.playerListA[i]] ? `${WebSocketSettings.nickNameListA[WebSocketSettings.playerListA[i]]} (${playerColorString[i + 1]})` : playerColorString[i + 1],
                 cpu: false,
             }
             if (WebSocketSettings.userId === WebSocketSettings.playerListA[i]) myNumber = i + 1;
