@@ -18,7 +18,7 @@ let WebSocketSettings = {
     started: false,
     isFinish: false,
     nickname: null,
-    version: "202207251516"
+    version: "202207261204"
 }
 WebSocketSettings.ws.url = WebSocketSettings.ws.url + `_${WebSocketSettings.version}`;
 
@@ -241,6 +241,7 @@ function websocketStart() {
                 }
                 if (data.type === "pushPlayerList") {
                     playerList = data.playerList;
+                    boardLength = data.boardLength;
                 }
             }
             if (data.leftHub) {
@@ -334,11 +335,21 @@ function ws_startGame () {
             }
         }
         if (WebSocketSettings.host) {
+            let boardLengthGet = getParam("board");
+            let boardLengthNumber = boardLength;
+            if (boardLengthGet) {
+                boardLengthNumber = Number(boardLengthGet);
+                if (boardLengthNumber % 2 !== 0) {
+                    boardLengthNumber = 8;
+                }
+            }
+            boardLength = boardLengthNumber;
             _ws.send(JSON.stringify({
                 "toH": WebSocketSettings.toGameRoomKey,
                 "type": "pushPlayerList",
                 "playerList": playerList,
-                "roomKey": WebSocketSettings.mRoomKey
+                "roomKey": WebSocketSettings.mRoomKey,
+                "boardLength": boardLengthNumber
             }));
         }
     }

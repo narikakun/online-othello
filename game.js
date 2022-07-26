@@ -7,8 +7,7 @@ let boardOneSize = 0; // オセロボードの一つ当たりの大きさ
 let boardPoint = [];
 let boardEndPoint = [];
 let nowPanel = [null, null]; // 現在の位置
-let nowPiece = {}; // 位置とプレイヤー情報（int）
-let nowPieceRotate = {};
+let nowPiece = {}; // 位置とプレイヤー情報
 let sizeWH = 0;
 let boardWH = 0;
 let boardPadding = 0;
@@ -457,6 +456,7 @@ function gameFinish () {
     } else {
         if (!finishC) finishB = true;
     }
+    boardLength = 8;
     statusMessage.string = `ゲームが終了しました。`;
     // 背景
     g.beginPath();
