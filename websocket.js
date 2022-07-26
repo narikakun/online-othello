@@ -18,7 +18,8 @@ let WebSocketSettings = {
     started: false,
     isFinish: false,
     nickname: null,
-    version: "202207261204"
+    gameBoardLength: 8,
+    version: "202207261442"
 }
 WebSocketSettings.ws.url = WebSocketSettings.ws.url + `_${WebSocketSettings.version}`;
 
@@ -169,10 +170,10 @@ function websocketStart() {
                 }
                 if (data.type === "nextPlayerRefresh") {
                     if (data.FROM !== WebSocketSettings.roomHost) return;
-                    nowPiece = data.nowPiece;
+                    nowPiece = json_GunZip(data.nowPiece);
                     nowNumber = data.nowNumber;
-                    zeroCanPoint = data.zeroCanPoint;
-                    canPoint = data.canPoint;
+                    zeroCanPoint = json_GunZip(data.zeroCanPoint);
+                    canPoint = json_GunZip(data.canPoint);
                     zeroIs = data.zeroIs;
                     setOthello = data.setOthello;
                     _clicked = false;
@@ -180,20 +181,20 @@ function websocketStart() {
                 }
                 if (data.type === "skipPlayer") {
                     if (data.FROM !== WebSocketSettings.roomHost) return;
-                    nowPiece = data.nowPiece;
+                    nowPiece = json_GunZip(data.nowPiece);
                     nowNumber = data.nowNumber;
-                    zeroCanPoint = data.zeroCanPoint;
-                    canPoint = data.canPoint;
+                    zeroCanPoint = json_GunZip(data.zeroCanPoint);
+                    canPoint = json_GunZip(data.canPoint);
                     zeroIs = data.zeroIs;
                     statusMessage.string = `${playerColorString[data.nowNumber]}がスキップされます。`;
                     showPlayerMessage("skip");
                 }
                 if (data.type === "dataRefresh") {
                     if (data.FROM !== WebSocketSettings.roomHost) return;
-                    nowPiece = data.nowPiece;
+                    nowPiece = json_GunZip(data.nowPiece);
                     nowNumber = data.nowNumber;
-                    zeroCanPoint = data.zeroCanPoint;
-                    canPoint = data.canPoint;
+                    zeroCanPoint = json_GunZip(data.zeroCanPoint);
+                    canPoint = json_GunZip(data.canPoint);
                     zeroIs = data.zeroIs;
                 }
                 if (data.type === "setOthello") {
@@ -230,6 +231,8 @@ function websocketStart() {
                 }
                 if (data.type === "finish") {
                     WebSocketSettings.isFinish = true;
+                    boardLength = 8;
+                    getSize();
                     setTimeout(()=>{
                         WebSocketSettings.closed = true;
                         startNow = false;
@@ -242,6 +245,7 @@ function websocketStart() {
                 if (data.type === "pushPlayerList") {
                     playerList = data.playerList;
                     boardLength = data.boardLength;
+                    WebSocketSettings.gameBoardLength = boardLength;
                     getSize();
                 }
             }
@@ -253,7 +257,8 @@ function websocketStart() {
                     statusMessage.string = "相手が切断したため終了しました。";
                     statusMessage.color = [255, 0, 0];
                     WebSocketSettings.isFinish = true;
-                    startNow = false;
+                    boardLength = 8;
+                    getSize();
                 } else {
                     if (WebSocketSettings.host) {
                         if (!WebSocketSettings.playerListA.includes(data.user)) return;
@@ -345,6 +350,7 @@ function ws_startGame () {
                 }
             }
             boardLength = boardLengthNumber;
+            WebSocketSettings.gameBoardLength = boardLength;
             getSize();
             _ws.send(JSON.stringify({
                 "toH": WebSocketSettings.toGameRoomKey,
@@ -390,4 +396,33 @@ function getParam(name, url) {
     if (!results) return null;
     if (!results[2]) return '';
     return decodeURIComponent(results[2].replace(/\+/g, " "));
+}
+
+// gzip化
+function json_gZip (json) {
+    let jsonPlain = new TextEncoder().encode(JSON.stringify(json));
+
+    let gzip = new Zlib.Gzip(jsonPlain);
+    let compressed = gzip.compress();
+    return uint8ArrayToBase64(compressed);
+}
+
+// gunZip化
+function json_GunZip (string) {
+    let gunzip = new Zlib.Gunzip(base64ToUint8Array(string));
+    let jsonPlain = gunzip.decompress();
+
+    let json = new TextDecoder().decode(jsonPlain);
+    return JSON.parse(json);
+}
+
+function uint8ArrayToBase64(uint8Array) {
+    return btoa(String.fromCharCode(...uint8Array));
+}
+
+function base64ToUint8Array(base64Str) {
+    const raw = atob(base64Str);
+    return Uint8Array.from(Array.prototype.map.call(raw, (x) => {
+        return x.charCodeAt(0);
+    }));
 }

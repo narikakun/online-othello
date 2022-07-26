@@ -369,6 +369,8 @@ function nextPlayer () {
         }
         if (nowPieceNullCount === 0) {
             WebSocketSettings.isFinish = true;
+            boardLength = 8;
+            getSize();
             _ws.send(JSON.stringify({
                 "toH": WebSocketSettings.toGameRoomKey,
                 "type": "finish",
@@ -397,6 +399,8 @@ function nextPlayer () {
         } else {
             if (loopCount > 5) {
                 WebSocketSettings.isFinish = true;
+                boardLength = 8;
+                getSize();
                 _ws.send(JSON.stringify({
                     "toH": WebSocketSettings.toGameRoomKey,
                     "type": "finish",
@@ -417,10 +421,10 @@ function nextPlayer () {
                 "type": "skipPlayer",
                 "roomKey": WebSocketSettings.toGameRoomKey,
                 "nowNumber": nowNumber,
-                "nowPiece": nowPiece,
-                "zeroCanPoint": zeroCanPoint,
+                "nowPiece": json_gZip(nowPiece),
+                "zeroCanPoint": json_gZip(zeroCanPoint),
                 "zeroIs": zeroIs,
-                "canPoint": canPoint
+                "canPoint": json_gZip(canPoint)
             }));
             showPlayerMessage("skip");
             return;
@@ -432,10 +436,10 @@ function nextPlayer () {
             "type": "nextPlayerRefresh",
             "roomKey": WebSocketSettings.toGameRoomKey,
             "nowNumber": nowNumber,
-            "nowPiece": nowPiece,
-            "zeroCanPoint": zeroCanPoint,
+            "nowPiece": json_gZip(nowPiece),
+            "zeroCanPoint": json_gZip(zeroCanPoint),
             "zeroIs": zeroIs,
-            "canPoint": canPoint,
+            "canPoint": json_gZip(canPoint),
             "setOthello": setOthello
         }));
         showPlayerMessage();
@@ -456,8 +460,6 @@ function gameFinish () {
     } else {
         if (!finishC) finishB = true;
     }
-    boardLength = 8;
-    getSize();
     statusMessage.string = `ゲームが終了しました。`;
     // 背景
     g.beginPath();
@@ -472,8 +474,8 @@ function gameFinish () {
     g.fillText("ゲーム結果", boardPoint[0]+((boardEndPoint[0]-boardPoint[0])/2), boardPoint[1] + (1.5 * boardOneSize));
     // ピース数カウント
     let playerPiece = {1:0,2:0,3:0,4:0};
-    for (let i = 0; i < boardLength; i++) {
-        for (let i2 = 0; i2 < boardLength; i2++) {
+    for (let i = 0; i < WebSocketSettings.gameBoardLength; i++) {
+        for (let i2 = 0; i2 < WebSocketSettings.gameBoardLength; i2++) {
             if (nowPiece[i][i2].id == null) continue;
             playerPiece[nowPiece[i][i2].id]++;
         }
