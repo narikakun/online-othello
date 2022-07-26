@@ -242,6 +242,7 @@ function websocketStart() {
                 if (data.type === "pushPlayerList") {
                     playerList = data.playerList;
                     boardLength = data.boardLength;
+                    getSize();
                 }
             }
             if (data.leftHub) {
@@ -344,6 +345,7 @@ function ws_startGame () {
                 }
             }
             boardLength = boardLengthNumber;
+            getSize();
             _ws.send(JSON.stringify({
                 "toH": WebSocketSettings.toGameRoomKey,
                 "type": "pushPlayerList",

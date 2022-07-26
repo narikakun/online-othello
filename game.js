@@ -457,6 +457,7 @@ function gameFinish () {
         if (!finishC) finishB = true;
     }
     boardLength = 8;
+    getSize();
     statusMessage.string = `ゲームが終了しました。`;
     // 背景
     g.beginPath();
