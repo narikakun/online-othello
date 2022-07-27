@@ -19,7 +19,7 @@ let WebSocketSettings = {
     isFinish: false,
     nickname: null,
     gameBoardLength: 8,
-    version: "202207271243"
+    version: "202207271309"
 }
 WebSocketSettings.ws.url = WebSocketSettings.ws.url + `_${WebSocketSettings.version}`;
 

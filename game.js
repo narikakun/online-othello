@@ -826,42 +826,44 @@ function drawOthelloCanvas () {
             setOthello[setOthelloFind].color[3] = setOthello[setOthelloFind].color[3]-0.1;
             if (setOthello[setOthelloFind].color[3] <= 0) setOthello = setOthello.filter(f => f.panel[0] !== nowX && f.panel[1] !== nowY);
         }
-        if (nowX === nowPanel[0] && nowY === nowPanel[1] && nowPiece[nowX][nowY].id == null && nowNumber === myNumber) {
-            gContextSetPiece(pieceXyR);
-            g.fillStyle = `rgba(${playerColor[nowNumber]}, 0.6)`;
-            g.fill();
-        } else if (nowPiece[nowX][nowY].id !== null) {
-            g.fillStyle = `rgba(${playerColor[nowPiece[nowX][nowY].id]})`;
-            let r = 1;
-            if (nowPiece[nowX][nowY].r) {
-                let rA = nowPiece[nowX][nowY].rA?nowPiece[nowX][nowY].rA:1;
-                if (nowPiece[nowX][nowY].r <= 8) {
-                    nowPiece[nowX][nowY].r = nowPiece[nowX][nowY].r + 0.3;
-                    if (nowPiece[nowX][nowY].r >= 3 && nowPiece[nowX][nowY].r <= 6) {
+        if (!WebSocketSettings.isFinish) {
+            if (nowX === nowPanel[0] && nowY === nowPanel[1] && nowPiece[nowX][nowY].id == null && nowNumber === myNumber) {
+                gContextSetPiece(pieceXyR);
+                g.fillStyle = `rgba(${playerColor[nowNumber]}, 0.6)`;
+                g.fill();
+            } else if (nowPiece[nowX][nowY].id !== null) {
+                g.fillStyle = `rgba(${playerColor[nowPiece[nowX][nowY].id]})`;
+                let r = 1;
+                if (nowPiece[nowX][nowY].r) {
+                    let rA = nowPiece[nowX][nowY].rA ? nowPiece[nowX][nowY].rA : 1;
+                    if (nowPiece[nowX][nowY].r <= 8) {
                         nowPiece[nowX][nowY].r = nowPiece[nowX][nowY].r + 0.3;
-                    }
-                    if (nowPiece[nowX][nowY].r < 4) {
-                        r = nowPiece[nowX][nowY].r;
-                        if (rA>0) nowPiece[nowX][nowY].rA=rA-0.1;
-                        g.fillStyle = `rgba(${playerColor[nowPiece[nowX][nowY].old]}, ${rA})`;
-                    } else {
-                        r = 8-nowPiece[nowX][nowY].r;
-                        if (rA<1) nowPiece[nowX][nowY].rA=rA+0.1;
-                        g.fillStyle = `rgba(${playerColor[nowPiece[nowX][nowY].id]}, ${rA})`;
+                        if (nowPiece[nowX][nowY].r >= 3 && nowPiece[nowX][nowY].r <= 6) {
+                            nowPiece[nowX][nowY].r = nowPiece[nowX][nowY].r + 0.3;
+                        }
+                        if (nowPiece[nowX][nowY].r < 4) {
+                            r = nowPiece[nowX][nowY].r;
+                            if (rA > 0) nowPiece[nowX][nowY].rA = rA - 0.1;
+                            g.fillStyle = `rgba(${playerColor[nowPiece[nowX][nowY].old]}, ${rA})`;
+                        } else {
+                            r = 8 - nowPiece[nowX][nowY].r;
+                            if (rA < 1) nowPiece[nowX][nowY].rA = rA + 0.1;
+                            g.fillStyle = `rgba(${playerColor[nowPiece[nowX][nowY].id]}, ${rA})`;
+                        }
                     }
                 }
+                if (r < 1) r = 1;
+                gContextSetPiece(pieceXyR, r);
+                g.fill();
+            } else if (canPoint[nowX][nowY]) {
+                gContextSetPiece(pieceXyR);
+                g.fillStyle = `rgba(${playerColor[nowNumber]}, 0.2)`;
+                g.fill();
+            } else if (zeroCanPoint[nowX][nowY] && zeroIs) {
+                gContextSetPiece(pieceXyR);
+                g.fillStyle = "rgba(255,255,0,0.2)";
+                g.fill();
             }
-            if (r<1) r = 1;
-            gContextSetPiece(pieceXyR, r);
-            g.fill();
-        } else if (canPoint[nowX][nowY]) {
-            gContextSetPiece(pieceXyR);
-            g.fillStyle = `rgba(${playerColor[nowNumber]}, 0.2)`;
-            g.fill();
-        } else if (zeroCanPoint[nowX][nowY] && zeroIs) {
-            gContextSetPiece(pieceXyR);
-            g.fillStyle = "rgba(255,255,0,0.2)";
-            g.fill();
         }
         nowX++;
     }
