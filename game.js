@@ -544,6 +544,7 @@ function othelloXY (x, y) {
 /*
  置ける場所を考える
  */
+
 function setCanDoOthello (x, y) {
     if (x == null || y == null) return false;
 
@@ -556,12 +557,12 @@ function setCanDoOthello (x, y) {
             if (nowPiece[i][y].id === nowNumber) return true;
         }
 
-        // 左横方向（現在マスから左・横を確認）
-        for (let i = x-1; i > -1; i--) {
+        // 左下方向（現在マスから左下・斜めを確認）
+        for (let i = y+1; i < boardLength; i++) {
             if (-1 > i || i > boardLength) continue;
-            if (nowPiece[i][y].id == null || ((nowPiece[i][y].id === nowNumber) && (x-1===i))) break;
-            if (nowPiece[i][y].id !== nowNumber && nowPiece[i][y].id !== null) continue;
-            if (nowPiece[i][y].id === nowNumber) return true;
+            if (nowPiece[x-(y-i)][i].id == null || ((nowPiece[x-(y-i)][i].id === nowNumber) && (y+1===i))) break;
+            if (nowPiece[x-(y-i)][i].id !== nowNumber && nowPiece[x-(y-i)][i].id !== null) continue;
+            if (nowPiece[x-(y-i)][i].id === nowNumber) return true;
         }
 
         // 下方向（現在マスから下・縦を確認）
@@ -570,6 +571,22 @@ function setCanDoOthello (x, y) {
             if (nowPiece[x][i].id == null || ((nowPiece[x][i].id === nowNumber) && (y+1===i))) break;
             if (nowPiece[x][i].id !== nowNumber && nowPiece[x][i].id !== null) continue;
             if (nowPiece[x][i].id === nowNumber) return true;
+        }
+
+        // 右下方向（現在マスから右下・斜めを確認）
+        for (let i = y+1; i < boardLength; i++) {
+            if (-1 > i || i > boardLength) continue;
+            if (nowPiece[x+(y-i)][i].id == null || ((nowPiece[x+(y-i)][i].id === nowNumber) && (y+1===i))) break;
+            if (nowPiece[x+(y-i)][i].id !== nowNumber && nowPiece[x+(y-i)][i].id !== null) continue;
+            if (nowPiece[x+(y-i)][i].id === nowNumber) return true;
+        }
+
+        // 左横方向（現在マスから左・横を確認）
+        for (let i = x-1; i > -1; i--) {
+            if (-1 > i || i > boardLength) continue;
+            if (nowPiece[i][y].id == null || ((nowPiece[i][y].id === nowNumber) && (x-1===i))) break;
+            if (nowPiece[i][y].id !== nowNumber && nowPiece[i][y].id !== null) continue;
+            if (nowPiece[i][y].id === nowNumber) return true;
         }
 
         // 上方向（現在マスから上・縦を確認）
@@ -596,21 +613,6 @@ function setCanDoOthello (x, y) {
             if (nowPiece[x+(y-i)][i].id === nowNumber) return true;
         }
 
-        // 左下方向（現在マスから左下・斜めを確認）
-        for (let i = y+1; i < boardLength; i++) {
-            if (-1 > i || i > boardLength) continue;
-            if (nowPiece[x-(y-i)][i].id == null || ((nowPiece[x-(y-i)][i].id === nowNumber) && (y+1===i))) break;
-            if (nowPiece[x-(y-i)][i].id !== nowNumber && nowPiece[x-(y-i)][i].id !== null) continue;
-            if (nowPiece[x-(y-i)][i].id === nowNumber) return true;
-        }
-
-        // 右下方向（現在マスから右下・斜めを確認）
-        for (let i = y+1; i < boardLength; i++) {
-            if (-1 > i || i > boardLength) continue;
-            if (nowPiece[x+(y-i)][i].id == null || ((nowPiece[x+(y-i)][i].id === nowNumber) && (y+1===i))) break;
-            if (nowPiece[x+(y-i)][i].id !== nowNumber && nowPiece[x+(y-i)][i].id !== null) continue;
-            if (nowPiece[x+(y-i)][i].id === nowNumber) return true;
-        }
     }
     return false;
 }
@@ -1082,10 +1084,21 @@ function cpGo () {
     let canPointFilter = [];
     for (const canPointKey in canPointA) {
         for (const canPointKeyAs in canPointA[canPointKey]) {
-            if (canPointA[canPointKey][canPointKeyAs]) canPointFilter.push([Number(canPointKey), Number(canPointKeyAs)]);
+            if (canPointA[canPointKey][canPointKeyAs]) {
+                let counter = setOthelloTurnCounter(Number(canPointKey), Number(canPointKeyAs));
+                canPointFilter.push([Number(canPointKey), Number(canPointKeyAs), counter]);
+            }
         }
     }
-    let selectPoint = canPointFilter[Math.floor(Math.random() * canPointFilter.length)];
+    canPointFilter.sort(function(a, b) {
+        if (a[2] > b[2]) {
+            return -1;
+        } else {
+            return 1;
+        }
+    })
+    console.log(canPointFilter);
+    let selectPoint = [canPointFilter[0][0], canPointFilter[0][1]];
     // 端っこが取れるなら取る
     let l1 = canPointFilter.find(f=>f[0]===0&&f[1]===0);
     let l2 = canPointFilter.find(f=>f[0]===0&&f[1]===boardLength-1);
@@ -1095,6 +1108,7 @@ function cpGo () {
     else if (l2) selectPoint = l2;
     else if (r1) selectPoint = r1;
     else if (r2) selectPoint = r2;
+    console.log(selectPoint);
     canvasMouseClick(null,true, selectPoint);
 }
 
@@ -1109,3 +1123,161 @@ setInterval(() => {
  連続クリック防止（バグ防止のため定期解除）
  */
 let clicked_interval = setInterval(() => _clicked = false, 1000);
+
+/*
+ 裏返せる数を計算
+ */
+/*
+function setOthelloTurnCounter (x, y) {
+    if (x == null || y == null) return 0;
+    let turnList = [];
+    let _cachePiece = nowPiece;
+    _cachePiece[x][y] = {id: nowNumber};
+    // 右方向
+    let _rightCount = null;
+    for (let i = x; i < boardLength; i++) {
+        if (-1 > i || i > boardLength) continue;
+        if (_cachePiece[i][y].id == null) break;
+        if (_cachePiece[i][y].id !== nowNumber) continue;
+        if (x!==i) {
+            _rightCount = i;
+            break;
+        }
+    }
+    if (_rightCount !== null) {
+        for (let i = x; i <= _rightCount; i++) {
+            if (_rightCount-x>=2) setWPieceCounter(x,y,i,y,nowNumber);
+        }
+    }
+
+    // 下方向
+    let _downCount = null;
+    for (let i = y; i < boardLength; i++) {
+        if (-1 > i || i > boardLength) continue;
+        if (_cachePiece[x][i].id == null) break;
+        if (_cachePiece[x][i].id !== nowNumber) continue;
+        if (y!==i) {
+            _downCount = i;
+            break;
+        }
+    }
+    if (_downCount !== null) {
+        for (let i = y; i <= _downCount; i++) {
+            if (_downCount-y>=2) setWPieceCounter(x,y,x, i,nowNumber);
+        }
+    }
+
+    // 左方向
+    let _leftCount = null;
+    for (let i = x; i > -1; i--) {
+        if (-1 > i || i > boardLength) continue;
+        if (_cachePiece[i][y].id == null) break;
+        if (_cachePiece[i][y].id !== nowNumber) continue;
+        if (x!==i) {
+            _leftCount = i;
+            break;
+        }
+    }
+    if (_leftCount !== null) {
+        for (let i = _leftCount; i <= x; i++) {
+            if (x-_leftCount>=2) setWPieceCounter(x,y,i,y,nowNumber);
+        }
+    }
+
+    // 上方向
+    let _upCount = null;
+    for (let i = y; i > -1; i--) {
+        if (-1 > i || i > boardLength) continue;
+        if (_cachePiece[x][i].id == null) break;
+        if (_cachePiece[x][i].id !== nowNumber) continue;
+        if (y!==i) {
+            _upCount = i;
+            break;
+        }
+    }
+    if (_upCount !== null) {
+        for (let i = _upCount; i <= y; i++) {
+            if (y-_upCount>=2) setWPieceCounter(x,y,x,i, nowNumber);
+        }
+    }
+
+    // 右上方向
+    let _rightUpCount = null;
+    for (let i = x; i < boardLength; i++) {
+        if (-1 > i || i > boardLength) continue;
+        if (_cachePiece[i][y+(x-i)].id == null) break;
+        if (_cachePiece[i][y+(x-i)].id !== nowNumber) continue;
+        if (x!==i) {
+            _rightUpCount = i;
+            break;
+        }
+    }
+    if (_rightUpCount !== null) {
+        for (let i = x; i <= _rightUpCount; i++) {
+            if (_rightUpCount-x>=2) setWPieceCounter(x,y,i, y+(x-i), nowNumber);
+        }
+    }
+
+    // 左下方向
+    let _leftDownCount = null;
+    for (let i = y; i < boardLength; i++) {
+        if (-1 > i || i > boardLength) continue;
+        if (_cachePiece[x+(y-i)][i].id == null) break;
+        if (_cachePiece[x+(y-i)][i].id !== nowNumber) continue;
+        if (y!==i) {
+            _leftDownCount = i;
+            break;
+        }
+    }
+    if (_leftDownCount !== null) {
+        for (let i = y; i <= _leftDownCount; i++) {
+            if (_leftDownCount-y>=2) setWPieceCounter(x,y,x+(y-i),i, nowNumber);
+        }
+    }
+
+    // 右下方向
+    let _rightDownCount = null;
+    for (let i = x; i < boardLength; i++) {
+        if (-1 > i || i > boardLength) continue;
+        if (_cachePiece[i][y-(x-i)].id == null) break;
+        if (_cachePiece[i][y-(x-i)].id !== nowNumber) continue;
+        if (x!==i) {
+            _rightDownCount = i;
+            break;
+        }
+    }
+    if (_rightDownCount !== null) {
+        for (let i = x; i <= _rightDownCount; i++) {
+            if (_rightDownCount-x>=2) setWPieceCounter(x,y,i, y-(x-i), nowNumber);
+        }
+    }
+
+    // 左上方向
+    let _leftUpCount = null;
+    for (let i = y; i > -1; i--) {
+        if (-1 > i || i > boardLength) continue;
+        if (_cachePiece[x-(y-i)][i].id == null) break;
+        if (_cachePiece[x-(y-i)][i].id !== nowNumber) continue;
+        if (y!==i) {
+            _leftUpCount = i;
+            break;
+        }
+    }
+    if (_leftUpCount !== null) {
+        for (let i = _leftUpCount; i <= y; i++) {
+            if (y-_leftUpCount>=2) setWPieceCounter(x,y,x-(y-i), i, nowNumber);
+        }
+    }
+
+    function setWPieceCounter (sX, sY, x, y, number) {
+        if (!(sX == x && sY == y) && number !== _cachePiece[x][y].id) {
+            if (!turnList.includes(`${x}:${y}`)) {
+                turnList.push(`${x}:${y}`);
+            }
+        }
+    }
+    console.log(turnList);
+    return turnList.length;
+}
+
+ */
