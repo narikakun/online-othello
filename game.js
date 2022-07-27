@@ -864,7 +864,15 @@ function drawOthelloCanvas () {
         }
         nowX++;
     }
-
+    // 残り時間
+    g.beginPath ();
+    g.font = `${sizeWH/50}pt Arial`;
+    g.fillStyle = `rgba(255,255,255)`;
+    g.textAlign = "right";
+    g.textBaseline = "top";
+    let timeString = playerTimerCount>0?playerTimerCount:"時間切れ";
+    let timeStringW = g.measureText(timeString).width;
+    g.fillText(timeString, boardEndPoint[0], boardEndPoint[1] + sizeWH / 200);
     if (WebSocketSettings.isFinish) {
         gameFinish();
     } else if (startNow) {
@@ -917,14 +925,7 @@ function drawOthelloCanvas () {
     g.fillStyle = `rgba(${statusMessage.color[0]}, ${statusMessage.color[1]}, ${statusMessage.color[2]})`;
     g.textAlign = "left";
     g.textBaseline = "bottom";
-    g.fillText(statusMessage.string, boardPoint[0], boardPoint[1]-(sizeWH/50), boardEndPoint[0]-boardPoint[0]);
-    // 残り時間
-    g.beginPath ();
-    g.font = `${sizeWH/50}pt Arial`;
-    g.fillStyle = `rgba(255,255,255)`;
-    g.textAlign = "right";
-    g.textBaseline = "top";
-    g.fillText(playerTimerCount>0?playerTimerCount:"時間切れ", boardEndPoint[0], boardEndPoint[1] + sizeWH / 200);
+    g.fillText(statusMessage.string, boardPoint[0], boardPoint[1]-(sizeWH/50), boardEndPoint[0]-boardPoint[0]-timeStringW);
     // 画面中央メッセージの描写
     if (showMessage.show) {
         // メッセージ背景
