@@ -796,7 +796,7 @@ function drawOthelloCanvas () {
     // バージョン情報
     g.beginPath();
     g.font = `${sizeWH / 90}pt Arial`;
-    g.fillStyle = `rgba(255,255,255)`;
+    g.fillStyle = `rgba(80,80,80)`;
     g.textAlign = "left";
     g.textBaseline = "top";
     g.fillText(`Ver.${WebSocketSettings.version}`, 10,10);5
@@ -886,9 +886,17 @@ function drawOthelloCanvas () {
                 playerListPieceCount[nowPiece[nowPieceKey][nowPieceKeyAs].id]++;
             }
         }
-        if (playerList[nowNumber]) {
-            g.fillText(`参加人数: ${WebSocketSettings.playerListA.length}人 | ${playerList[nowNumber].name}の数: ${playerListPieceCount[nowNumber]} | あなたは ${playerColorString[myNumber]}`, boardPoint[0], boardEndPoint[1] + sizeWH / 200, boardEndPoint[0]-boardPoint[0]);
+        let pieceCountString = "";
+        for (const playerListPieceCountKey in playerListPieceCount) {
+            if (!playerListPieceCount[playerListPieceCountKey]) continue;
+            if (pieceCountString !== "") pieceCountString += " | ";
+            pieceCountString += `${playerColorString[playerListPieceCountKey]}: ${playerListPieceCount[playerListPieceCountKey]}`;
         }
+        if (playerList[nowNumber]) {
+            let footerText = `参加人数: ${WebSocketSettings.playerListA.length}人 | 今のターン: ${playerList[nowNumber].name} | あなた: ${playerColorString[myNumber]}`;
+            g.fillText(footerText, boardPoint[0], boardEndPoint[1] + sizeWH / 200, boardEndPoint[0]-boardPoint[0]);
+        }
+        g.fillText(pieceCountString, boardPoint[0], boardEndPoint[1] + (sizeWH / 50) + ((sizeWH / 200)*2.5), boardEndPoint[0]-boardPoint[0]);
     } else {
         // タイトル画面
         showTitleScreen();
