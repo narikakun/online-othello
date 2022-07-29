@@ -19,7 +19,7 @@ let WebSocketSettings = {
     isFinish: false,
     nickname: null,
     gameBoardLength: 8,
-    version: "202207271309"
+    version: "202207291107"
 }
 WebSocketSettings.ws.url = WebSocketSettings.ws.url + `_${WebSocketSettings.version}`;
 
@@ -251,13 +251,28 @@ function websocketStart() {
             }
             if (data.leftHub) {
                 if (WebSocketSettings.toGameRoomKey) {
-                    WebSocketSettings.closed = true;
-                    _ws.close();
-                    startNow = false;
-                    statusMessage.string = "相手が切断したため終了しました。";
-                    statusMessage.color = [255, 0, 0];
-                    WebSocketSettings.isFinish = true;
-                    boardLength = 8;
+                    let leftUser = null;
+                    for (let i = 1; i <= WebSocketSettings.playerMax; i++) {
+                        console.log(playerList[i]);
+                        console.log(data);
+                        if (!playerList[i]) continue;
+                        if (playerList[i].id === data.user){
+                            leftUser = i;
+                            break;
+                        }
+                    }
+                    if (leftUser) {
+                        statusMessage.string = `${playerList[leftUser].name}が抜けたためCPUに変わりました。`;
+                        playerList[leftUser].cpu = true;
+                    } else {
+                        WebSocketSettings.closed = true;
+                        _ws.close();
+                        startNow = false;
+                        statusMessage.string = "相手が切断したため終了しました。";
+                        statusMessage.color = [255, 0, 0];
+                        WebSocketSettings.isFinish = true;
+                        boardLength = 8;
+                    }
                     getSize();
                 } else {
                     if (WebSocketSettings.host) {
@@ -278,8 +293,17 @@ function websocketStart() {
                         }
                     } else {
                         if (WebSocketSettings.roomHost === data.user) {
-                            statusMessage.string = "ホストユーザーが抜けたため切断しました。";
-                            statusMessage.color = [255, 0, 0];
+                            statusMessage.string = "ホストユーザーが抜けたためあなたがホストになりました。";
+                            statusMessage.color = [255, 255, 255];
+                            WebSocketSettings.host = true;
+                            WebSocketSettings.playerListA = [];
+                            WebSocketSettings.nickNameListA = {};
+                            WebSocketSettings.roomHost = null;
+                            WebSocketSettings.playerListRoom = [];
+                            WebSocketSettings.closed = true;
+                            _ws.close();
+                            _ws = null;
+                            websocketStart();
                         }
                     }
                 }
@@ -306,8 +330,9 @@ function startCount () {
     WebSocketSettings.started = true;
     let waitTime = 5;
     _wsTimer = setInterval(() => {
-        if (0 > waitTime) {
+        if (0 > waitTime && waitTime !== 6) {
             clearInterval(_wsTimer);
+            waitTime = 6;
             ws_goRoom();
             return;
         }

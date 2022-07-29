@@ -1097,7 +1097,6 @@ function cpGo () {
             return 1;
         }
     })
-    console.log(canPointFilter);
     let selectPoint = [canPointFilter[0][0], canPointFilter[0][1]];
     // 端っこが取れるなら取る
     let l1 = canPointFilter.find(f=>f[0]===0&&f[1]===0);
@@ -1108,7 +1107,6 @@ function cpGo () {
     else if (l2) selectPoint = l2;
     else if (r1) selectPoint = r1;
     else if (r2) selectPoint = r2;
-    console.log(selectPoint);
     canvasMouseClick(null,true, selectPoint);
 }
 
@@ -1127,11 +1125,11 @@ let clicked_interval = setInterval(() => _clicked = false, 1000);
 /*
  裏返せる数を計算
  */
-/*
+
 function setOthelloTurnCounter (x, y) {
     if (x == null || y == null) return 0;
     let turnList = [];
-    let _cachePiece = nowPiece;
+    let _cachePiece = JSON.parse(JSON.stringify(nowPiece));
     _cachePiece[x][y] = {id: nowNumber};
     // 右方向
     let _rightCount = null;
@@ -1279,5 +1277,3 @@ function setOthelloTurnCounter (x, y) {
     console.log(turnList);
     return turnList.length;
 }
-
- */
