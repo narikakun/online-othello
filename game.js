@@ -1274,6 +1274,5 @@ function setOthelloTurnCounter (x, y) {
             }
         }
     }
-    console.log(turnList);
     return turnList.length;
 }
