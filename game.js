@@ -161,6 +161,7 @@ window.addEventListener("load", function(){
 let lastCanvasClick = new Date().getTime();
 function canvasMouseClick (e, cpu = false, panel = null)
 {
+    if (!WebSocketSettings.trueIs) return;
     let _panel = panel?panel:nowPanel;
     if (startNow) {
         if (_panel[0] == null || _panel[1] == null) {
@@ -910,7 +911,7 @@ function drawOthelloCanvas () {
             g.fillText(footerText, boardPoint[0], boardEndPoint[1] + sizeWH / 200, boardEndPoint[0]-boardPoint[0]-timeStringW);
         }
         g.fillText(pieceCountString, boardPoint[0], boardEndPoint[1] + (sizeWH / 50) + ((sizeWH / 200)*2.5), boardEndPoint[0]-boardPoint[0]);
-    } else {
+    } else if (WebSocketSettings.trueIs) {
         // タイトル画面
         showTitleScreen();
     }
@@ -944,6 +945,12 @@ function drawOthelloCanvas () {
         g.textAlign = "center";
         g.textBaseline = "middle";
         g.fillText(showMessage.string, boardPoint[0]+((boardEndPoint[0]-boardPoint[0])/2), (boardEndPoint[1]-boardPoint[1])/2, boardEndPoint[0]-boardPoint[0]);
+    }
+    if (!getParam("dnt")) {
+        showMessage.string = `開放されていません。`;
+        showMessage.show = true;
+    } else {
+        WebSocketSettings.trueIs = true;
     }
 }
 
