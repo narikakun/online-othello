@@ -328,7 +328,7 @@ function playerTimer () {
     _playerTimer = setInterval(() => {
         if (0 > playerTimerCount) {
             clearInterval(_playerTimer);
-            nextPlayer();
+            cpGo();
             return;
         }
         _ws.send(JSON.stringify({
