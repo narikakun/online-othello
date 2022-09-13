@@ -1141,7 +1141,7 @@ function setOthelloTurnCounter (x, y) {
     let _rightCount = null;
     for (let i = x; i < boardLength; i++) {
         if (-1 > i || i > boardLength) continue;
-        if (_cachePiece[i][y].id == null) break;
+        if (_cachePiece[i][y].id == null || _cachePiece[i][y].zeroIs) break;
         if (_cachePiece[i][y].id !== nowNumber) continue;
         if (x!==i) {
             _rightCount = i;
@@ -1158,7 +1158,7 @@ function setOthelloTurnCounter (x, y) {
     let _downCount = null;
     for (let i = y; i < boardLength; i++) {
         if (-1 > i || i > boardLength) continue;
-        if (_cachePiece[x][i].id == null) break;
+        if (_cachePiece[x][i].id == null || _cachePiece[x][i].zeroIs) break;
         if (_cachePiece[x][i].id !== nowNumber) continue;
         if (y!==i) {
             _downCount = i;
@@ -1175,7 +1175,7 @@ function setOthelloTurnCounter (x, y) {
     let _leftCount = null;
     for (let i = x; i > -1; i--) {
         if (-1 > i || i > boardLength) continue;
-        if (_cachePiece[i][y].id == null) break;
+        if (_cachePiece[i][y].id == null || _cachePiece[i][y].zeroIs) break;
         if (_cachePiece[i][y].id !== nowNumber) continue;
         if (x!==i) {
             _leftCount = i;
@@ -1192,7 +1192,7 @@ function setOthelloTurnCounter (x, y) {
     let _upCount = null;
     for (let i = y; i > -1; i--) {
         if (-1 > i || i > boardLength) continue;
-        if (_cachePiece[x][i].id == null) break;
+        if (_cachePiece[x][i].id == null || _cachePiece[x][i].zeroIs) break;
         if (_cachePiece[x][i].id !== nowNumber) continue;
         if (y!==i) {
             _upCount = i;
@@ -1209,7 +1209,7 @@ function setOthelloTurnCounter (x, y) {
     let _rightUpCount = null;
     for (let i = x; i < boardLength; i++) {
         if (-1 > i || i > boardLength) continue;
-        if (_cachePiece[i][y+(x-i)].id == null) break;
+        if (_cachePiece[i][y+(x-i)].id == null || _cachePiece[i][y+(x-i)].zeroIs) break;
         if (_cachePiece[i][y+(x-i)].id !== nowNumber) continue;
         if (x!==i) {
             _rightUpCount = i;
@@ -1226,7 +1226,7 @@ function setOthelloTurnCounter (x, y) {
     let _leftDownCount = null;
     for (let i = y; i < boardLength; i++) {
         if (-1 > i || i > boardLength) continue;
-        if (_cachePiece[x+(y-i)][i].id == null) break;
+        if (_cachePiece[x+(y-i)][i].id == null || _cachePiece[x+(y-i)][i].zeroIs) break;
         if (_cachePiece[x+(y-i)][i].id !== nowNumber) continue;
         if (y!==i) {
             _leftDownCount = i;
@@ -1243,7 +1243,7 @@ function setOthelloTurnCounter (x, y) {
     let _rightDownCount = null;
     for (let i = x; i < boardLength; i++) {
         if (-1 > i || i > boardLength) continue;
-        if (_cachePiece[i][y-(x-i)].id == null) break;
+        if (_cachePiece[i][y-(x-i)].id == null || _cachePiece[i][y-(x-i)].zeroIs) break;
         if (_cachePiece[i][y-(x-i)].id !== nowNumber) continue;
         if (x!==i) {
             _rightDownCount = i;
@@ -1260,7 +1260,7 @@ function setOthelloTurnCounter (x, y) {
     let _leftUpCount = null;
     for (let i = y; i > -1; i--) {
         if (-1 > i || i > boardLength) continue;
-        if (_cachePiece[x-(y-i)][i].id == null) break;
+        if (_cachePiece[x-(y-i)][i].id == null || _cachePiece[x-(y-i)][i].zeroIs) break;
         if (_cachePiece[x-(y-i)][i].id !== nowNumber) continue;
         if (y!==i) {
             _leftUpCount = i;
