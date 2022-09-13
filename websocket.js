@@ -209,8 +209,11 @@ function websocketStart() {
                         }));
                         return;
                     }
-                    zeroIs = false;
                     nowPiece[data.panel[0]][data.panel[1]].id = nowNumber;
+                    nowPiece[data.panel[0]][data.panel[1]].zeroIs = zeroIs;
+                    console.log(zeroIs);
+                    console.log(nowPiece[data.panel[0]][data.panel[1]])
+                    zeroIs = false;
                     setOthello.push({
                         panel: data.panel,
                         color: [255, 255, 0, 1]
@@ -274,6 +277,9 @@ function websocketStart() {
                         }
                         statusMessage.string = `${playerList[leftUser].name}が抜けたためCPUに変わりました。`;
                         playerList[leftUser].cpu = true;
+                        if (nowNumber == leftUser) {
+                            playerTimerCount = 1;
+                        }
                     } else {
                         WebSocketSettings.closed = true;
                         _ws.close();
