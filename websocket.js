@@ -9,7 +9,7 @@ let WebSocketSettings = {
     host: true,
     playerListA: [],
     nickNameListA: {},
-    mRoomKey: String(Math.floor( Math.random() * (9999-1111) ) + 1111),
+    mRoomKey: String(new Date().getTime()) + String(Math.floor( Math.random() * (9999-1111) ) + 1111),
     roomHost: null,
     closed: false,
     playerMax: 4,
@@ -27,6 +27,7 @@ WebSocketSettings.ws.url = WebSocketSettings.ws.url + `_${WebSocketSettings.vers
 let _wsTimer = null;
 let lastSet = null;
 let _wsPingTimer = null;
+let botti = false;
 
 //OsakaHumanManyMany
 let _ws;
@@ -236,6 +237,7 @@ function websocketStart() {
                 if (data.type === "finish") {
                     WebSocketSettings.isFinish = true;
                     boardLength = 8;
+                    finishDataGoGoPanic();
                     getSize();
                     setTimeout(()=>{
                         WebSocketSettings.closed = true;
@@ -274,6 +276,7 @@ function websocketStart() {
                             statusMessage.color = [255, 0, 0];
                             WebSocketSettings.isFinish = true;
                             boardLength = 8;
+                            finishDataGoGoPanic();
                         }
                         statusMessage.string = `${playerList[leftUser].name}が抜けたためCPUに変わりました。`;
                         playerList[leftUser].cpu = true;
@@ -466,4 +469,13 @@ function base64ToUint8Array(base64Str) {
     return Uint8Array.from(Array.prototype.map.call(raw, (x) => {
         return x.charCodeAt(0);
     }));
+}
+
+/*
+ 終了時に統計データを送信する
+ */
+function finishDataGoGoPanic() {
+    let xhr = new XMLHttpRequest();
+    xhr.open('GET', 'https://gameapi.nakn.jp/othello/analytics/?resultInsert=1'+`&playerCount=${WebSocketSettings.playerListRoom.length}&gameId=${WebSocketSettings.toGameRoomKey}`, true);
+    xhr.send();
 }
