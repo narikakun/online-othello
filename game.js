@@ -179,7 +179,7 @@ window.addEventListener("load", function(){
         roomKeySetIs = true;
         WebSocketSettings.host = true;
         WebSocketSettings.roomHost = WebSocketSettings.userId;
-        WebSocketSettings.toGameRoomKey = WebSocketSettings.roomKey;
+        WebSocketSettings.toGameRoomKey = WebSocketSettings.mRoomKey;
         startNow = true;
         playerDefaultTimerCount = 30;
         WebSocketSettings.started = true;
@@ -884,7 +884,7 @@ function drawOthelloCanvas () {
             setOthello[setOthelloFind].color[3] = setOthello[setOthelloFind].color[3]-0.1;
             if (setOthello[setOthelloFind].color[3] <= 0) setOthello = setOthello.filter(f => f.panel[0] !== nowX && f.panel[1] !== nowY);
         }
-        if (!WebSocketSettings.isFinish) {
+        if (!WebSocketSettings.isFinish || WebSocketSettings.gameBoardLength == 8) {
             if (nowX === nowPanel[0] && nowY === nowPanel[1] && nowPiece[nowX][nowY].id == null && nowNumber === myNumber) {
                 gContextSetPiece(pieceXyR);
                 g.fillStyle = `rgba(${playerColor[nowNumber]}, 0.6)`;
