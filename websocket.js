@@ -409,6 +409,7 @@ function ws_startGame () {
     statusMessage.string = "ゲームを開始します。";
     startNow = true;
     clearInterval(_wsPingTimer);
+    startDataGoGoPanic();
     init();
 
 }
@@ -476,6 +477,16 @@ function base64ToUint8Array(base64Str) {
  */
 function finishDataGoGoPanic() {
     let xhr = new XMLHttpRequest();
-    xhr.open('GET', 'https://gameapi.nakn.jp/othello/analytics/?resultInsert=1'+`&playerCount=${WebSocketSettings.playerListRoom.length}&gameId=${WebSocketSettings.toGameRoomKey}`, true);
+    let date = new Date();
+    xhr.open('GET', 'https://gameapi.nakn.jp/othello/analytics/?resultInsert=1'+`&playerCount=${WebSocketSettings.playerListRoom.length}&gameId=${WebSocketSettings.toGameRoomKey}&endTime=${date.getFullYear()}-${1 + date.getMonth()}-${date.getDate()} ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`, true);
+    xhr.send();
+}
+
+/*
+ 開始時に統計データを送信する
+ */
+function startDataGoGoPanic() {
+    let xhr = new XMLHttpRequest();
+    xhr.open('GET', 'https://gameapi.nakn.jp/othello/analytics/?startInsert=1'+`&playerCount=${WebSocketSettings.playerListRoom.length}&gameId=${WebSocketSettings.toGameRoomKey}`, true);
     xhr.send();
 }

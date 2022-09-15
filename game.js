@@ -196,8 +196,9 @@ function startBotti () {
     WebSocketSettings.playerMax = 2;
     WebSocketSettings.trueIs = true;
     WebSocketSettings.playerListA = [WebSocketSettings.userId, "1234"];
-    WebSocketSettings.playerListRoom = [WebSocketSettings.userId, "1234"];
+    WebSocketSettings.playerListRoom = [WebSocketSettings.userId];
     myNumber = 1;
+    startDataGoGoPanic();
     init();
 }
 /*
