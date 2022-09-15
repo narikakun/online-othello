@@ -129,7 +129,7 @@ window.addEventListener("load", function(){
         // クッキーからニックネーム
         let nickNameC = getParam("nickname");
         if (nickNameC) {
-            WebSocketSettings.nickname = nickNameC;
+            WebSocketSettings.nickname = nickNameC.substring(0, 15);
         } else {
             let cookies = document.cookie;
             let cookiesArray = cookies.split(';');
@@ -137,15 +137,15 @@ window.addEventListener("load", function(){
             for (let c of cookiesArray) {
                 let cArray = c.split('=');
                 if (cArray[0] == 'nickname') {
-                    WebSocketSettings.nickname = cArray[1];
+                    WebSocketSettings.nickname = cArray[1].substring(0, 15);
                 }
             }
         }
         if (!WebSocketSettings.nickname) {
             let inputNickname = window.prompt("ゲーム内で利用するニックネームを設定できます。（そのままスキップも可能です。）", "");
             if (inputNickname) {
-                WebSocketSettings.nickname = inputNickname;
-                document.cookie = "nickname=" + inputNickname;
+                WebSocketSettings.nickname = inputNickname.substring(0, 15);
+                document.cookie = "nickname=" + inputNickname.substring(0, 15);
             }
         }
     }
@@ -162,36 +162,44 @@ window.addEventListener("load", function(){
         }
     } else {
         // ボッチプレイ用
-        playerList = {
-            "1": {
-                "id": WebSocketSettings.userId,
-                "name": "自分 (黒)",
-                "cpu": false
-            },
-            "2": {
-                "id": "1234",
-                "name": "CPU (白)",
-                "cpu": true
-            },
-            "3": null,
-            "4": null
-        };
-        roomKeySetIs = true;
-        WebSocketSettings.host = true;
-        WebSocketSettings.roomHost = WebSocketSettings.userId;
-        WebSocketSettings.toGameRoomKey = WebSocketSettings.mRoomKey;
-        startNow = true;
-        playerDefaultTimerCount = 30;
-        WebSocketSettings.started = true;
-        WebSocketSettings.playerMax = 2;
-        WebSocketSettings.trueIs = true;
-        WebSocketSettings.playerListA = [WebSocketSettings.userId, "1234"];
-        WebSocketSettings.playerListRoom = [WebSocketSettings.userId, "1234"];
-        myNumber = 1;
-        init();
+        startBotti();
     }
 });
 
+/*
+ ぼっちもーどに行く
+ */
+function startBotti () {
+    // ボッチプレイ用
+    botti = true;
+    playerList = {
+        "1": {
+            "id": WebSocketSettings.userId,
+            "name": "自分 (黒)",
+            "cpu": false
+        },
+        "2": {
+            "id": "1234",
+            "name": "CPU (白)",
+            "cpu": true
+        },
+        "3": null,
+        "4": null
+    };
+    roomKeySetIs = true;
+    WebSocketSettings.host = true;
+    WebSocketSettings.roomHost = WebSocketSettings.userId;
+    WebSocketSettings.toGameRoomKey = WebSocketSettings.mRoomKey;
+    startNow = true;
+    playerDefaultTimerCount = 30;
+    WebSocketSettings.started = true;
+    WebSocketSettings.playerMax = 2;
+    WebSocketSettings.trueIs = true;
+    WebSocketSettings.playerListA = [WebSocketSettings.userId, "1234"];
+    WebSocketSettings.playerListRoom = [WebSocketSettings.userId, "1234"];
+    myNumber = 1;
+    init();
+}
 /*
  33msごとに描写更新
  */
@@ -306,6 +314,9 @@ function canvasMouseClick (e, cpu = false, panel = null)
         }
         if ((_panel[0] >= 2 && _panel[0] <= 5) && (_panel[1] === 6)) {
             if (WebSocketSettings.isFinish) location.reload();
+        }
+        if (_panel[0] === 6 && _panel[1] === 6) {
+            startBotti();
         }
         _clicked = false;
     }
@@ -1098,16 +1109,20 @@ function showTitleScreen () {
             roomNumberSetCanvas(i, 6, false);
         }
         // Goボタン
-        g.beginPath();
-        gContextSetPiece([boardPoint[0] + (7 * boardOneSize) + (boardLine * 6) - (boardOneSize / 2), boardPoint[1] + (6 * boardOneSize) + (boardLine * 5) - (boardOneSize / 2), boardOneSize / 2.3]);
-        g.fillStyle = "rgba(255,255,255)";
-        g.fill();
+        for (let i = 0; i < 2; i++) {
+            g.beginPath();
+            gContextSetPiece([boardPoint[0] + (7 * boardOneSize) + (boardLine * 6) - (boardOneSize / 2), boardPoint[1] + ((6+i) * boardOneSize) + (boardLine * (5+i)) - (boardOneSize / 2), boardOneSize / 2.3]);
+            g.fillStyle = "rgba(255,255,255)";
+            g.fill();
+        }
         g.beginPath();
         g.font = `${sizeWH / 20}pt Arial`;
         g.fillStyle = `rgba(0, 0, 0)`;
         g.textAlign = "center";
         g.textBaseline = "top";
         g.fillText("Go", boardPoint[0] + (6 * boardOneSize) + (boardLine * 5) + (boardOneSize / 1.9), boardPoint[1] + (5 * boardOneSize) + (boardLine * 5) + (boardOneSize / 5));
+        g.font = `${sizeWH / 47}pt Arial`;
+        g.fillText("ぼっち", boardPoint[0] + (6 * boardOneSize) + (boardLine * 5) + (boardOneSize / 1.9), boardPoint[1] + (6 * boardOneSize) + (boardLine * 6) + (boardOneSize / 3));
     }
 }
 
