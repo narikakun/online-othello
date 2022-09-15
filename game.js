@@ -514,6 +514,7 @@ function gameFinish () {
     } else {
         if (!finishC) finishB = true;
     }
+    if (_playerTimer) clearInterval(_playerTimer);
     statusMessage.string = `ゲームが終了しました。`;
     // 背景
     g.beginPath();
