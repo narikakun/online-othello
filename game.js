@@ -1014,12 +1014,7 @@ function drawOthelloCanvas () {
         g.textBaseline = "middle";
         g.fillText(showMessage.string, boardPoint[0]+((boardEndPoint[0]-boardPoint[0])/2), (boardEndPoint[1]-boardPoint[1])/2, boardEndPoint[0]-boardPoint[0]);
     }
-    if (!getParam("dnt")) {
-        showMessage.string = `開放されていません。`;
-        showMessage.show = true;
-    } else {
-        WebSocketSettings.trueIs = true;
-    }
+    WebSocketSettings.trueIs = true;
 }
 
 /*
