@@ -19,7 +19,7 @@ let WebSocketSettings = {
     isFinish: false,
     nickname: null,
     gameBoardLength: 8,
-    version: "202209141816",
+    version: "20220928",
     trueIs: false
 }
 WebSocketSettings.ws.url = WebSocketSettings.ws.url + `_${WebSocketSettings.version}`;
@@ -478,7 +478,7 @@ function base64ToUint8Array(base64Str) {
 function finishDataGoGoPanic() {
     let xhr = new XMLHttpRequest();
     let date = new Date();
-    xhr.open('GET', 'https://gameapi.nakn.jp/othello/analytics/?resultInsert=1'+`&playerCount=${WebSocketSettings.playerListRoom.length}&gameId=${WebSocketSettings.toGameRoomKey}&endTime=${date.getFullYear()}-${1 + date.getMonth()}-${date.getDate()} ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`, true);
+    xhr.open('GET', 'https://gameapi.nakn.jp/othello/analytics/?resultInsert=1'+`&playerCount=${WebSocketSettings.playerListRoom.length}&gameId=${WebSocketSettings.toGameRoomKey}&endTime=${date.getFullYear()}-${1 + date.getMonth()}-${date.getDate()} ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}&roomKey=${WebSocketSettings.mRoomKey}`, true);
     xhr.send();
 }
 
