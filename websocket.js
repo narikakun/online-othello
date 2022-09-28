@@ -478,7 +478,7 @@ function base64ToUint8Array(base64Str) {
 function finishDataGoGoPanic() {
     let xhr = new XMLHttpRequest();
     let date = new Date();
-    xhr.open('GET', 'https://gameapi.nakn.jp/othello/analytics/?resultInsert=1'+`&playerCount=${WebSocketSettings.playerListRoom.length}&gameId=${WebSocketSettings.toGameRoomKey}&endTime=${date.getFullYear()}-${1 + date.getMonth()}-${date.getDate()} ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}&roomKey=${WebSocketSettings.mRoomKey}`, true);
+    xhr.open('GET', 'https://gameapi.nakn.jp/othello/analytics/?resultInsert=1'+`&playerCount=${WebSocketSettings.playerListRoom.length}&gameId=${WebSocketSettings.roomKey}&endTime=${date.getFullYear()}-${1 + date.getMonth()}-${date.getDate()} ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}&roomKey=${WebSocketSettings.mRoomKey}`, true);
     xhr.send();
 }
 
