@@ -1105,9 +1105,9 @@ function showTitleScreen () {
             roomNumberSetCanvas(i, 6, false);
         }
         // Goボタン
-        for (let i = 0; i < 2; i++) {
+        for (let i = 0; i < 3; i++) {
             g.beginPath();
-            gContextSetPiece([boardPoint[0] + (7 * boardOneSize) + (boardLine * 6) - (boardOneSize / 2), boardPoint[1] + ((6+i) * boardOneSize) + (boardLine * (5+i)) - (boardOneSize / 2), boardOneSize / 2.3]);
+            gContextSetPiece([boardPoint[0] + (7 * boardOneSize) + (boardLine * 6) - (boardOneSize / 2), boardPoint[1] + ((5+i) * boardOneSize) + (boardLine * (4+i)) - (boardOneSize / 2), boardOneSize / 2.3]);
             g.fillStyle = "rgba(255,255,255)";
             g.fill();
         }
@@ -1119,6 +1119,8 @@ function showTitleScreen () {
         g.fillText("Go", boardPoint[0] + (6 * boardOneSize) + (boardLine * 5) + (boardOneSize / 1.9), boardPoint[1] + (5 * boardOneSize) + (boardLine * 5) + (boardOneSize / 5));
         g.font = `${sizeWH / 47}pt Arial`;
         g.fillText("ぼっち", boardPoint[0] + (6 * boardOneSize) + (boardLine * 5) + (boardOneSize / 1.9), boardPoint[1] + (6 * boardOneSize) + (boardLine * 6) + (boardOneSize / 3));
+        g.font = `${sizeWH / 47}pt Arial`;
+        g.fillText("遊び方", boardPoint[0] + (6 * boardOneSize) + (boardLine * 5) + (boardOneSize / 1.9), boardPoint[1] + (4 * boardOneSize) + (boardLine * 5) + (boardOneSize / 3));
     }
 }
 
