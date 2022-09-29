@@ -319,6 +319,9 @@ function canvasMouseClick (e, cpu = false, panel = null)
         if (_panel[0] === 6 && _panel[1] === 6) {
             startBotti();
         }
+        if (_panel[0] === 6 && _panel[1] === 4) {
+            window.open( './asobikata.png', null, 'left=200,top=200' );
+        }
         _clicked = false;
     }
 }
